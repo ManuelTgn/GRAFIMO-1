@@ -72,13 +72,12 @@ class SDist(sd):
         super().run()
 
 name = "GRAFIMO"
-version = '1.1'
-release = '1.1.2'
+version = '1.1.4'
 
 # definition of setup()
 setup(
       name='grafimo',
-      version=release,
+      version=version,
       author='Manuel Tognon',
       author_email='manu.tognon@gmail.com',
       url="https://github.com/pinellolab/GRAFIMO",
@@ -104,6 +103,7 @@ setup(
               'numpy>=1.16.4',
               'statsmodels>=0.11.0',
               'numba>=0.47',
+              'sphinx>=3.5.2',
               ],
       extras_require={
           'dev': ['Cython']
