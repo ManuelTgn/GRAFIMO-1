@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2020 Pinello Lab
+# Copyright (c) 2021 Pinello Lab
 #
 # Permission is hereby granted, free of charge, to any person obtaining 
 # a copy of this software and associated documentation files (the 
@@ -25,73 +25,61 @@
 
 
 """
-
 GRAFIMO version {version}
 
-Copyright (C) 2020 Manuel Tognon <manu.tognon@gmail.com> <manuel.tognon@univr.it>
+Copyright (C) 2021 Manuel Tognon <manu.tognon@gmail.com> <manuel.tognon@univr.it>
 
 GRAph-based Find of Individual Motif Occurrences.
 
 GRAFIMO scans genome variation graphs in VG format (Garrison et al., 2018) 
-for candidate binding site occurrences of a given DNA motif/ set of DNA 
-motifs. 
+to find potential binding site occurrences of DNA motif(s).
 
-This software requires that `Cython` (>= 0.28), `Pandas` (>= 0.24), 
-`Numpy` (>= 1.16), `Multiprocessing`, `Statsmodels` (>= 0.10) and 
-`Numba` (>= 0.47) to be installed within the Python3 enviroment you are 
-using while running it.
+Usage:
 
-This software also requires that `VG` (>= 1.27.1), `tabix` and `graphviz` 
-to be installed on your machine and have been added to your enviroment 
-PATH (Unix PATH). 
+    * to scan a set of precomputed genome variation graphs (-- SUGGESTED --):
 
-GRAFIMO searches the DNA motif(s) given as a PWM (MEME, JASPAR format) 
-in a set of genomic coordinates on the genome variation graph. These 
-genomic coordinates are given in UCSC BED file format.
+        grafimo findmotif -d path/to/my/vgs -b BEDFILE.bed -m MOTIF.meme [options]
 
-GRAFIMO scans in a single run many genomes, represented as genome 
-variation graphs, showing how genetic variation present within a 
-population of individuals affects the affinity score  of the given DNA 
+    * to scan a precomputed genome variation graph:
+        
+        grafimo findmotif -g GENOME_GRAPH.xg -b BEDFILE.bed -m MOTIF.meme [options]
+
+    * to build a new set of genome variation graphs (one for each chromosome or a user defined subset):
+        
+        grafimo buildvg -l REFERENCE.fa -v VCF.vcf.gz [options]
+
+GRAFIMO searches DNA motif(s) occurrences, given as a PWM (MEME, JASPAR format), 
+in a set of genomic coordinates on VGs. Genomic coordinates are provided in tab-separated file
+(e.g. ENCODE narrowPeak or UCSC BED format).
+
+GRAFIMO scans in a single run all the genomes encoded in the input VG. 
+GRAFIMO helps studying how genetic variation present within a 
+population of individuals affects the binding affinity score of input DNA 
 motif(s).
 
 GRAFIMO provides the possibility to build from user data a new genome 
 variation graph, by building a VG for each chromosome.
 
-GRAFIMO results are reported in three files stored in a result directory 
-(named `grafimo_out_JOBID` by default):
-* TSV report, containing all the reported binding site candidates, with 
-    an associated score, P-value, q-value, haplotype frequency within 
-    the analyzed population and a flag stating if the current occurrence 
-    contains a genomic variants
-* HTML version of the TSV report
-* GFF3 file to load the found motif candidates on the UCSC genome browser 
-  as custom track
+GRAFIMO results are reported in three files (stored in a directory named `grafimo_out_JOBID` by default):
+    
+    * TSV report, containing all the reported binding site candidates, with 
+      an associated score, P-value, q-value, haplotype frequency within 
+      the analyzed population and a flag stating if the current occurrence 
+      contains a genomic variants
 
-Usage:
+    * HTML version of the TSV report
 
-    * to scan a precomputed genome variation graph:
-        `grafimo findmotif -g GENOME_GRAPH.xg -b BEDFILE.bed -m MOTIF.meme [options]`
+    * GFF3 file to load the found motif candidates on the UCSC genome browser 
+      as custom track
 
-    * to scan a set of precomputed genome variation graphs 
-      (-- SUGGESTED --):
-        `grafimo findmotif -d path/to/my/vgs -b BEDFILE.bed -m MOTIF.meme [options]`
+Citation:
 
-    * to build a new set of genome variation graphs (one for each 
-      chromosome or a user defined subset):
-        `grafimo buildvg -l REFERENCE.fa -v VCF.vcf.gz [options]`
-
-See https://github.com/pinellolab/GRAFIMO or 
-https://github.com/InfOmics/GRAFIMO or the `docs` directory for the full 
-documentation.
+    Tognon, Manuel, et al. "GRAFIMO: variant and haplotype aware motif scanning on 
+    pangenome graphs." bioRxiv (2021).
 
 
-If you use GRAFIMO in your research, please cite us:
-
-    Tognon, M., et al., "GRAFIMO: variant-aware motif scanning via 
-    genome variation graphs", xxxx
-
-
-Run `grafimo --help` to see all command-line options.
+Run "grafimo --help" to see all command-line options.
+See https://github.com/pinellolab/GRAFIMO/wiki or https://github.com/InfOmics/GRAFIMO/wiki for the full documentation.
 """
 
 
@@ -110,7 +98,7 @@ import sys
 import os
 
 
-def get_AP() -> GRAFIMOArgumentParser:
+def get_parser() -> GRAFIMOArgumentParser:
     """Read the comman-line arguments given to GRAFIMO and creates a 
     GRAFIMOArgumentParser object containing all of them
 
@@ -128,34 +116,32 @@ def get_AP() -> GRAFIMOArgumentParser:
     parser: GRAFIMOArgumentParser = GRAFIMOArgumentParser(usage=__doc__, 
                                                           add_help = False)
 
-    ####################################################################
-    # start reading the arguments
-    ####################################################################
+    # start commandline arguments parsing
 
     group = parser.add_argument_group("Options")
-    group.add_argument("-h", "--help", action="help", help="Show the help " 
+    group.add_argument("-h", "--help", action="help", help="Show this help " 
                        "message and exit")
-    group.add_argument("--version", action="version", help="Show the current "
+    group.add_argument("--version", action="version", help="Show software "
                        "version and exit", version=__version__)
-    group.add_argument("--cores", type=int, default=0, metavar="NCORES", 
-                       nargs='?', const=0, help="Number of cores to use. The "
-                       "default value is %(default)s (auto-detection). If you "
-                       "chose to query the whole genome variation graph note "
-                       "that the default option is to use only one core to avoid"
-                       " memory issues")
+    group.add_argument("-j", "--cores", type=int, default=0, metavar="NCORES", 
+                       nargs='?', const=0, help="Number of CPU cores to use. Use 0 "
+                       "to auto-detect. Default: %(default)s. "
+                       "To search motifs in a whole genome variation graph the "
+                       "default is 1 (avoid memory issues).")
 
     ####################################################################
     # mandatory arguments
     ####################################################################
     group.add_argument("workflow", type=str, default='',
-                       help="This option accpets only two values: 'buildvg'"
-                       " or 'findmotif'. This option is mandatory. When used "
-                       "'buildvg', GRAFIMO will compute the genome variation "
-                       "graph for each chromosome or a user defined subset, "
-                       "from the given reference genome and VCF file. When used "
-                       "'findmotif' GRAFIMO will scan a given VG or all the VGs "
-                       "contained in a given directory, for the given motif "
-                       "occurrences")
+                       help="Mandatory argument placed immediately after \"grafimo\". "
+                       "Only two values are accepted: \"buildvg\" and \"findmotif\". "
+                       "When called \"grafimo buildvg\", the software will compute "
+                       "the genome variation graph from input data "
+                       "(see \"buildvg options\" section below for more arguments). "
+                       "When called \"grafimo findmotif\", the software will scan "
+                       "the input VG(s) for potential occurrences of the input "
+                       "motif(s) (see \"findmotif option\" section below for more arguments)."
+                       )
 
     # arguments to build the VGs
     group.add_argument("-l", "--linear-genome", type=str, help="Path to the "
@@ -238,7 +224,7 @@ def get_AP() -> GRAFIMOArgumentParser:
 
     return parser
 
-# end of get_AP()
+# end of get_parser()
 
 
 def main(cmdLineargs: Optional[List[str]] = None) -> None :
@@ -248,14 +234,14 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
         start: float = time.time()
 
         # read the command-line arguments
-        parser: GRAFIMOArgumentParser = get_AP()
+        parser: GRAFIMOArgumentParser = get_parser()
 
         if cmdLineargs is None:
             cmdLineargs: List[str] = sys.argv[1:]  # take input args
 
         # no argument given
         if len(cmdLineargs) == 0:
-            parser.error("No argument given. Unable to proceed.")
+            parser.error_noargs()
             die(1)
 
         # the second argument must be buildvg or findmotif
