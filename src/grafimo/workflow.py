@@ -91,7 +91,7 @@ class BuildVG(Workflow):
 
     #-------------------------------------------------------------------
     # BuilVG attributes
-    #-------------------------------------------------------------------
+    #
     _reference_genome: str
     _vcf: str
     _reindex: bool
@@ -101,13 +101,17 @@ class BuildVG(Workflow):
     _chroms_namemap: Dict
     _cores: int
     _outdir: str
+    _debug: bool
     _verbose: bool
-    _test: bool = True
+    _test: bool = False
 
 
     #-------------------------------------------------------------------
     # BuildVG methods
-    #-------------------------------------------------------------------
+    #
+
+    # these errors should never appear --> no need for error formatting
+    # can assume that debug mode == True
     def __init__(self, args: Namespace):
         errmsg: str = "\n\nERROR: commandline parsing failed. Type mismatch: expected {}, got {} instance.\n"
         if not isinstance(args, Namespace):

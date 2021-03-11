@@ -86,7 +86,7 @@ See https://github.com/pinellolab/GRAFIMO/wiki or https://github.com/InfOmics/GR
 from grafimo.GRAFIMOArgumentParser import GRAFIMOArgumentParser
 from grafimo.workflow import BuildVG, Findmotif
 from grafimo.utils import die, initialize_chroms_list, isJaspar_ff, isMEME_ff, \
-    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS
+    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS, anydup
 from grafimo.grafimo import __version__, buildvg, findmotif
 from grafimo.GRAFIMOException import DependencyError
 import multiprocessing as mp
@@ -131,6 +131,8 @@ def get_parser() -> GRAFIMOArgumentParser:
                        "default is 1 (avoid memory issues).")
     group.add_argument("--verbose", default=False, action='store_true',
                        help="Print additional information about GRAFIMO run.")
+    group.add_argument("--debug", action="store_true", default=False, dest="debug",
+                       help="Enable error traceback.")
     group.add_argument("-o", "--out", type=str, help="Output directory."
                        " [optional]", nargs='?', const='grafimo_out', default='', 
                        metavar='OUTDIR')
@@ -157,7 +159,7 @@ def get_parser() -> GRAFIMOArgumentParser:
                         metavar=("1", "X"), dest="chroms_build",
                         help="Chromosomes for which construct the VG. By default "
                         "GRAFIMO constructs the VG for all chromsomes.")
-    group.add_argument("--chroms-prefix-build", type=str, nargs="?", default="chr",
+    group.add_argument("--chroms-prefix-build", type=str, nargs="?", default="",
                        metavar="CHRPREFIX", dest="chroms_prefix_build",
                        help="Prefix to append in front of chromosome numbers. "
                        "To name chromosome VGs with only their number (e.g. 1.xg), "
@@ -212,7 +214,7 @@ def get_parser() -> GRAFIMOArgumentParser:
     group.add_argument("--chroms-find", type=str, nargs="*", default=[],
                        metavar=("1", "X"), dest="chroms_find", help="Scan only "
                        "the specified chromosomes.")
-    group.add_argument("--chroms-prefix-find", type=str, nargs="?", default="chr",
+    group.add_argument("--chroms-prefix-find", type=str, nargs="?", default="",
                        metavar="CHRPREFIX", dest="chroms_prefix_find", 
                        help="Prefix shared by all chromosomes. The prefix should "
                        "be followed by the chromosome number. If chromosome VGs "
@@ -312,61 +314,68 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
         if (not isinstance(args.verbose, bool) or
                 (args.verbose != False and args.verbose != True)):
             parser.error(
-                '--verbose does not accept any positional argument.'
+                '\"--verbose\" does not accept any positional argument'
             )
 
-        buildvg_err_msg: str = "Unexpected arguments for \"grafimo buildvg\""
+        # debugging
+        if (not isinstance(args.debug, bool) or
+                (args.debug != False and args.debug != True)):
+            parser.error(
+                "\"--debug\" does not accept any positional argument"
+            )
+
+        buildvg_err_msg: str = "Unexpected arguments for \"grafimo buildvg\": \"{}\""
 
         # checks for buildvg workflow
         if args.workflow == "buildvg":
 
             if args.graph_genome_dir:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-d, --genome-graph-dir"))
                 die(1)
             elif args.graph_genome:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-g, --genome-graph"))
                 die(1)
             elif args.bedfile:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-b, --bedfile"))
                 die(1)
             elif args.motif:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-m, --motif"))
                 die(1)
             elif args.bgfile != 'UNIF':  # if default ignored
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-k, --bgfile"))
                 die(1)
             elif args.pseudo != 0.1:  # if default ignored
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-p, --pseudo"))
                 die(1)
             elif args.threshold != 1e-4:  # if default ignored
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-t, --thresh"))
                 die(1)
             elif args.no_qvalue:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-q, --no-qvalue"))
                 die(1)
             elif args.no_reverse:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-r, --no-reverse"))
                 die(1)
             elif args.text_only:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("-f, --text-only"))
                 die(1)
             elif args.chroms_find:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("--chroms-find"))
                 die(1)
-            elif args.chroms_prefix_find != "chr":  # if deafult ignored
-                parser.error(buildvg_err_msg)
+            elif args.chroms_prefix_find: 
+                parser.error(buildvg_err_msg.format("--chroms-prefix-find"))
                 die(1)
             elif args.chroms_namemap_find != NOMAP:  # if default ignored
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("--chroms-namemap-find"))
                 die(1)
             elif args.qval_t:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("--qvalueT"))
                 die(1)
             elif args.recomb:
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("--recomb"))
                 die(1)
             elif args.top_graphs != 0:  # if default ignored
-                parser.error(buildvg_err_msg)
+                parser.error(buildvg_err_msg.format("--top-graphs"))
                 die(1)
             elif not args.linear_genome:
                 parser.error("No reference genome given")
@@ -408,6 +417,10 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                 # chromosome to construct VG
                 if len(args.chroms_build) == 0:
                     args.chroms_build = [ALL_CHROMS]  # use all chromosome 
+                else:
+                    if anydup(args.chroms_build):
+                        parser.error("Duplicated chromosome names given to "
+                        "\"--chroms-build\"")
 
                 # chromosome name-map
                 if args.chroms_namemap_build != NOMAP:
@@ -416,8 +429,7 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                             "Unable to locate {}".format(args.chroms_namemap_build)
                         )
 
-                if (args.chroms_prefix_build != "chr" and 
-                    args.chroms_namemap_build != NOMAP):
+                if (args.chroms_prefix_build and args.chroms_namemap_build != NOMAP):
                     parser.error(
                         "\"--chroms-prefix-build\" and \"chroms-namemap-build\" "
                         "cannot used together. Choose one of those options"
@@ -676,7 +688,7 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
         if isinstance(workflow, BuildVG):
             # build the VG for each chromosome or a user defined subset 
             # of them
-            buildvg(workflow)
+            buildvg(workflow, args.debug)
 
         elif isinstance(workflow, Findmotif):
             # scan a precomputed VG or a set of VGs

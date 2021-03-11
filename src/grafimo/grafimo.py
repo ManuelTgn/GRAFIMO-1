@@ -14,6 +14,7 @@ from grafimo.motif_set import MotifSet
 from grafimo.extract_regions import scan_graph
 from grafimo.res_writer import print_results, write_results
 from grafimo.score_sequences import compute_results
+from grafimo.utils import exception_handler
 import pandas as pd
 import time
 import sys
@@ -24,7 +25,10 @@ import os
 __version__ = '1.1.4'
 
 
-def buildvg(args_obj: BuildVG) -> None:
+sys.excepthook = exception_handler
+
+
+def buildvg(args_obj: BuildVG, debug: bool) -> None:
     """Call the functions needed to constuct the genome variation graph 
     from a reference FASTA file and a phased VCF file.
 
@@ -37,13 +41,11 @@ def buildvg(args_obj: BuildVG) -> None:
     """
 
     if not isinstance(args_obj, BuildVG):
-        raise ValueError("Unknown arguments object type")
-
+        errmsg = "Expected BuildVG object, got {}.\n"
+        exception_handler(TypeError, errmsg.format(type(args_obj).__name__), debug)
     printWelcomeMsg()
-
-    # if verbose == True will be printed a lot of unusefull stuff
+    # if verbose == True print a lot of info
     verbose = args_obj.verbose
-
     print("\n\nBuilding the VG for chromosome:")
     for c in args_obj.chroms:
         print(c, end=" ")
@@ -59,6 +61,7 @@ def buildvg(args_obj: BuildVG) -> None:
         print("\t- Name-map: ", args_obj.namemap)
         print("\t- Cores: ", args_obj.cores)
         print("\t- Output directory: ", args_obj.outdir)
+        print("\t- Debug:", debug)
         print("\t- Verbose: ", verbose)
         print("\t- Test mode: ", args_obj.get_test())
     # end if
@@ -67,7 +70,7 @@ def buildvg(args_obj: BuildVG) -> None:
         print("\nBeginning VGs construction\n")
 
     # begin VGs construction
-    construct_vg(args_obj)  # the VGs will be stored in the defined output directory
+    construct_vg(args_obj, debug)  # the VGs will be stored in the defined output directory
 
 # end of buildvg()
 

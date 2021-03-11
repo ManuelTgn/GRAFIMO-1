@@ -2,6 +2,7 @@
 
 
 from grafimo.GRAFIMOException import NoDataFrameException
+from colorama import Fore, init 
 from typing import List, Optional, Tuple, Dict
 from shutil import which
 import pandas as pd
@@ -53,6 +54,26 @@ def sigint_handler() -> None:
 
 # end of sigint_handler()
 
+
+def exception_handler(
+    exception_type, 
+    exception, 
+    debug
+):
+    """Handle Exceptions for debugging purposes. If debug is set to True 
+    the entire error traceback is printed to stderr, otherwise a 
+    graceful error message is sent to stderr.
+    """
+    init()
+    if debug:
+        raise exception_type("\n\n{}".format(exception))
+    else:
+        sys.stderr.write(Fore.RED + "\n\nERROR: " + "{}".format(exception) + Fore.RESET)
+        die(1)
+
+# end of exception_handler()
+
+
 def parse_namemap(namemap_fn:str) -> Dict:
     """Parse chromosome name-map file.
 
@@ -89,6 +110,8 @@ def parse_namemap(namemap_fn:str) -> Dict:
         assert bool(chroms_namemap)
     return chroms_namemap
 
+# end of parse_namemap()
+
 
 def isListEqual(lst1: List, lst2: List) -> bool:
     """Check if two lists contain the same distinct elements.
@@ -111,6 +134,27 @@ def isListEqual(lst1: List, lst2: List) -> bool:
     return False
 
 # end of isListEqual()
+
+def anydup(lst: List) -> bool:
+    """Check if are there any duplicate value in the input list
+    
+    Parameters
+    ----------
+    lst : list
+        list of values
+
+    Returns 
+    -------
+    bool
+    """
+
+    seen = set()
+    for e in lst:
+        if e in seen: return True
+        seen.add(e)
+    return False
+
+# end of anydup()
 
 
 def initialize_chroms_list(args_chroms: List[str]):
