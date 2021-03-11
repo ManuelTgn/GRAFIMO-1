@@ -8,7 +8,8 @@ For each one of the two workflows a class is created, which carries
 all the arguments needed while executing the two operations.
 """
 
-from typing import List
+from grafimo.utils import parse_namemap
+from typing import List, Dict
 from argparse import Namespace
 
 
@@ -96,100 +97,150 @@ class BuildVG(Workflow):
     _reindex: bool
     _chroms: List
     _chroms_num: int
+    _chroms_prefix: str
+    _chroms_namemap: Dict
     _cores: int
     _outdir: str
     _verbose: bool
-    _test: bool = False
+    _test: bool = True
 
 
     #-------------------------------------------------------------------
     # BuildVG methods
     #-------------------------------------------------------------------
     def __init__(self, args: Namespace):
-        errmsg: str = "\n\nERROR: incorrect command line arguments object type"
+        errmsg: str = "\n\nERROR: commandline parsing failed. Type mismatch: expected {}, got {} instance.\n"
         if not isinstance(args, Namespace):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("Namespace", type(args).__name__))
         if not isinstance(args.linear_genome, str):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.linear_genome).__name__))
         if not isinstance(args.vcf, str):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.vcf).__name__))
         if not isinstance(args.reindex, bool):
-            raise ValueError(errmsg)
-
-        if not isinstance(args.chroms, list):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("bool", type(args.reindex).__name__))
+        if not isinstance(args.chroms_build, list):
+            raise TypeError(errmsg.format("list", type(args.chroms_build).__name__))
+        if not isinstance(args.chroms_prefix_build, str):
+            raise TypeError(errmsg.format("str", type(args.chroms_prefix_build).__name__))
+        if not isinstance(args.chroms_namemap_build, str):
+            raise TypeError(errmsg.format("str", type(args.chroms_namemap_build).__name__))
         if not isinstance(args.cores, int):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("int", type(args.cores).__name__))
         if not isinstance(args.out, str):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.out).__name__))
         if not isinstance(args.verbose, bool):
-            raise ValueError(errmsg)
+            raise TypeError(errmsg.format("bool", type(args.verbose).__name__))
 
         self._reference_genome = args.linear_genome
         self._vcf = args.vcf
         self._reindex = args.reindex
-        self._chroms = args.chroms
-        self._chroms_num = len(args.chroms)
+        self._chroms = args.chroms_build
+        self._chroms_num = len(args.chroms_build)
+        self._chroms_prefix = args.chroms_prefix_build
+        self._chroms_namemap = parse_namemap(args.chroms_namemap_build)
         self._cores = args.cores
         self._outdir = args.out
         self._verbose = args.verbose
-    
 
-    def get_reference_genome(self) -> str:
+
+    def _get_reference_genome(self) -> str:
         if self._reference_genome:
             return self._reference_genome
         else:
-            raise ValueError("No reference genome found")
+            raise AttributeError("\n\nERROR: \"self._reference_genome\" is empty.")
+    
+    @property
+    def reference_genome(self):
+        return self._get_reference_genome()
 
 
-    def get_vcf(self) -> str:
+    def _get_vcf(self) -> str:
         if self._vcf:
             return self._vcf
         else:
-            raise ValueError("No VCF file found")
+            raise AttributeError("\n\nERROR: \"self._vcf\" is empty.")
+    
+    @property
+    def vcf(self):
+        return self._get_vcf()
 
 
-    def get_reindex(self) -> bool:
+    def _get_reindex(self) -> bool:
         return self._reindex
+    
+    @property
+    def reindex(self):
+        return self._get_reindex()
 
 
-    def get_chroms(self) -> List:
+    def _get_chroms(self) -> List:
         if self._chroms is None:
-            raise ValueError("No chromosomes list found")
+            raise AttributeError("\n\nERROR: \"self._chroms\" is empty.")
         else:
             return self._chroms
 
+    @property
+    def chroms(self):
+        return self._get_chroms()
 
-    def get_chroms_num(self) -> int:
+
+    def _get_chroms_num(self) -> int:
         if self._chroms_num == -1:
-            raise ValueError("Forbidden number of chromosomes found")
+            raise ValueError("\n\nERROR: Forbidden number of chromosomes.")
         else:
             return self._chroms_num
 
+    @property
+    def choms_num(self):
+        return self._get_chroms_num()
 
-    def get_cores(self) -> int:
+
+    def _get_chroms_prefix(self):
+        return self._chroms_prefix
+
+    @property
+    def chroms_prefix(self):
+        return self._get_chroms_prefix()
+
+    
+    def _get_chroms_namemap(self):
+        return self._chroms_namemap
+
+    @property
+    def namemap(self):
+        return self._get_chroms_namemap()
+
+
+    def _get_cores(self) -> int:
         if self._cores:
             return self._cores
         else:
-            raise ValueError("Unknown number of cores to use")
+            raise AttributeError("\n\nERROR: \"self._cores\" is empty.\n")
 
-    def get_outdir(self) -> str:
+    @property
+    def cores(self):
+        return self._get_cores()
+
+
+    def _get_outdir(self) -> str:
         if self._outdir:
             return self._outdir
         else:
-            raise ValueError("Unknown output directory")
+            raise AttributeError("\n\nERROR: \"self._outdir\" is empty.\n")
+    
+    @property
+    def outdir(self):
+        return self._get_outdir()
 
 
-    def get_verbose(self) -> bool:
+    def _get_verbose(self) -> bool:
         return self._verbose
+    
+    @property
+    def verbose(self):
+        return self._get_verbose()
 
-
+    # only for testing purposes -> not useful as property
     def get_test(self) -> bool:
         return self._test
 

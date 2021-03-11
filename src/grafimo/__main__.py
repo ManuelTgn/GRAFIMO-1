@@ -86,7 +86,7 @@ See https://github.com/pinellolab/GRAFIMO/wiki or https://github.com/InfOmics/GR
 from grafimo.GRAFIMOArgumentParser import GRAFIMOArgumentParser
 from grafimo.workflow import BuildVG, Findmotif
 from grafimo.utils import die, initialize_chroms_list, isJaspar_ff, isMEME_ff, \
-    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP
+    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS
 from grafimo.grafimo import __version__, buildvg, findmotif
 from grafimo.GRAFIMOException import DependencyError
 import multiprocessing as mp
@@ -253,12 +253,12 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
         parser: GRAFIMOArgumentParser = get_parser()
 
         if cmdLineargs is None:
-            cmdLineargs: List[str] = sys.argv[1:]  # take input args
+            cmdLineargs: List[str] = sys.argv[1:]  # get input args
 
-        # no argument given
+        # no arguments given --> print help
         if len(cmdLineargs) == 0:
             parser.error_noargs()
-            die(1)
+            die(2)
 
         # the second argument must be buildvg or findmotif
         if ((cmdLineargs[0] != "-h" and cmdLineargs[0] != "--help") and
@@ -274,44 +274,48 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
             print("Parsing arguments...")
             start_args_parse: float = time.time()
 
-        ################################################################
+        #--------------------------------------------------------------#
         # check commandline arguments consistency
-        ################################################################
+        #
 
+        #---------------------- general options -----------------------#
+        
+        # workflow type
         if args.workflow != "buildvg" and args.workflow != "findmotif":
-            parser.error("Do not know what to do. Available options: create VGs "
-                         "with 'grafimo buildvg' or scan a precomputed genome "
-                         "variation graph with 'grafimo findmotif'")
+            parser.error(
+                "Unexpected workflow given. Available options:\n"
+                "\tbuildvg: construct VG from user data.\n"
+                "\tfindmotif: scan VG for DNA motif(s) occurrences")
             die(1)
 
-        # cores (shared by the two workflows)
+        # cpu cores 
         if args.cores < 0:
-            parser.error("The number of cores cannot be negative")
-
+            parser.error("Negative number of CPU cores given")
         elif args.cores == 0 and args.graph_genome:
-            # to query a whole genome graph is loaded into RAM, since 
-            # usually they are very heavy in terms of bytes is safer to 
-            # use 1 thread by default, otherwise it would be loaded 
-            # #cores times. If you want use more cores, be sure your 
-            # system can handle the resulting amount of data
+            # when whole genome variation graph is given, it is safer to
+            # use 1 CPU core by default. This beacuse of the space needed
+            # to load the whole VG on RAM.
+            #
+            # CAVEAT: before requiring more CPU cores to be used, be sure
+            # your system has enough memory  
             args.cores = 1  
-
         elif args.cores == 0:
-            # by default take all the available CPUs
+            # default option -> use all available CPU cores
             args.cores = mp.cpu_count() 
-        # end if
+        else:  # args.cores > 0
+            if args.cores > mp.cpu_count():
+                parser.error(
+                    "Too many CPU cores to use ({})".format(args.cores)
+                )
 
-        # check verbose flag
+        # verbosity 
         if (not isinstance(args.verbose, bool) or
                 (args.verbose != False and args.verbose != True)):
             parser.error(
-                'The --verbose parameter accepts only True or False values')
+                '--verbose does not accept any positional argument.'
+            )
 
-        # chromosomes check (shared by the two workflows)
-        if len(args.chroms) == 0:
-            args.chroms = ['ALL_CHROMS']
-
-        buildvg_err_msg = "Unexpected arguments for grafimo buildvg"
+        buildvg_err_msg: str = "Unexpected arguments for \"grafimo buildvg\""
 
         # checks for buildvg workflow
         if args.workflow == "buildvg":
@@ -319,112 +323,109 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
             if args.graph_genome_dir:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.graph_genome:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.bedfile:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.motif:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.bgfile != 'UNIF':  # if default ignored
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.pseudo != 0.1:  # if default ignored
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.threshold != 1e-4:  # if default ignored
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.no_qvalue:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.no_reverse:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.text_only:
                 parser.error(buildvg_err_msg)
                 die(1)
-            
             elif args.chroms_find:
                 parser.error(buildvg_err_msg)
                 die(1)
-
-            elif args.chroms_prefix_find 1= "chr":  # if deafult ignored
+            elif args.chroms_prefix_find != "chr":  # if deafult ignored
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.chroms_namemap_find != NOMAP:  # if default ignored
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.qval_t:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.recomb:
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif args.top_graphs != 0:  # if default ignored
                 parser.error(buildvg_err_msg)
                 die(1)
-
             elif not args.linear_genome:
                 parser.error("No reference genome given")
                 die(1)
-
             elif not args.vcf:
                 parser.error("No VCF file given")
                 die(1)
-
-            else:
-                # check linear genome
+            else:  # arguments for buildvg are correct
+                # reference genome
                 if (args.linear_genome.split('.')[-1] != 'fa' and
                         args.linear_genome.split('.')[-1] != 'fasta'):
                     parser.error(
-                        "The linear genome must be in FASTA format (FASTA and "
-                        "FA extensions allowed)")
+                        "The reference genome  file must be in FASTA format"
+                    )
                     die(1)
-
                 else:
-                    if len(glob.glob(args.linear_genome)) != 1:
+                    if not os.path.isfile(args.linear_genome):
                         parser.error(
-                            'Cannot find the given reference genome file')
+                            "Unable to find {}".format(args.linear_genome))
                         die(1)
-
                     args.linear_genome = os.path.abspath(args.linear_genome)
                 # end if
 
-                # check VCF --> the VCF must have been compressed with
+                # VCF --> the VCF file must have been compressed with
                 # bgzip (https://github.com/samtools/tabix)
-                if ((args.vcf.split('.')[-1] != 'gz' 
-                        and args.vcf.split('.')[-1] != 'zip')
-                        or args.vcf.split('.')[-2] != 'vcf'):  
+                if (args.vcf.split(".")[-1] != "gz" and 
+                    args.vcf.split(".")[-2] != "vcf"):  
                     parser.error(
-                        "Incorrect VCF file given: the VCF must be compressed "
-                        "(e.g. myvcf.vcf.gz)")
+                        "Wrong VCF file given. The VCF file must have been "
+                        "compressed with bgzip (e.g. myvcf.vcf.gz)"
+                    )
                     die(1)
-
                 else:
-                    if len(glob.glob(args.vcf)) <= 0:
-                        parser.error('Cannot find the given VCF file')
+                    if not os.path.isfile(args.vcf):
+                        parser.error('Unable to find {}'.format(args.vcf))
                         die(1)
                     args.vcf = os.path.abspath(args.vcf)
 
-                # by deafult the built VGs will be stored in the current 
-                # directory
-                if args.out == "":  # general default value
+                # chromosome to construct VG
+                if len(args.chroms_build) == 0:
+                    args.chroms_build = [ALL_CHROMS]  # use all chromosome 
+
+                # chromosome name-map
+                if args.chroms_namemap_build != NOMAP:
+                    if not os.path.isfile(args.chroms_namemap_build):
+                        parser.error(
+                            "Unable to locate {}".format(args.chroms_namemap_build)
+                        )
+
+                if (args.chroms_prefix_build != "chr" and 
+                    args.chroms_namemap_build != NOMAP):
+                    parser.error(
+                        "\"--chroms-prefix-build\" and \"chroms-namemap-build\" "
+                        "cannot used together. Choose one of those options"
+                    )
+
+                # if no out directory is specified the VGs are stored in
+                # the current directory
+                if args.out == "": 
                     args.out = os.path.abspath("./")
 
                 workflow: BuildVG = BuildVG(args)
@@ -666,10 +667,9 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
             print("Dependencies correctly satisfied")
             print("Dependencies checked in %.2fs" % (end_deps - start_deps))
 
-        ################################################################
-
+        #---------------------------------------------------------------
         # dependency check was ok, so we go to workflow selection:
-        #   * creation of the genome variation graph for 
+        #   * construction of the genome variation graph for 
         #     each chromosome or a user defined subset of them
         #   * scan of a precomputed VG or a set of precomputed VG
 
@@ -700,11 +700,9 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
 # end of main()
 
 
-########################################################################
-#
+#-----------------------------------------------------------------------
 # Entry point for GRAFIMO
 #
-########################################################################
 
 if __name__ == "__main__":
     main()

@@ -97,8 +97,8 @@ class GRAFIMOArgumentParser(ArgumentParser):
             Message which will be shown when raising an error
         """
 
-        errmsg = "{}: ERROR: {}.\n\nRun \"grafimo --help\" to see usage\n\n"
-        sys.stderr.write(errmsg.format(self.prog, msg))
+        errmsg = "\nERROR: {}.\n\nRun \"grafimo --help\" to see usage\n\n"
+        sys.stderr.write(errmsg.format(msg))
         sys.exit(2)
 
 

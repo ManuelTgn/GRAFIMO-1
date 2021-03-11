@@ -2,7 +2,7 @@
 
 
 from grafimo.GRAFIMOException import NoDataFrameException
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from shutil import which
 import pandas as pd
 import numpy as np
@@ -12,9 +12,11 @@ import os
 
 #-----------------------------------------------------------------------
 # constant vars
-#-----------------------------------------------------------------------
+#
 DNA_ALPHABET = ['A', 'C', 'G', 'T'] 
 REV_COMPL = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
+NOMAP = "NOMAP"
+ALL_CHROMS = "use_all_chroms"
 PSEUDObg = np.double(0.0000005)
 LOG_FACTOR = 1.44269504
 RANGE = 1000
@@ -28,7 +30,7 @@ PHASE = '.'
 
 #-----------------------------------------------------------------------
 # functions
-#-----------------------------------------------------------------------
+#
 def die(code: int) -> None:
     """Stop the execution and exit.
 
@@ -50,6 +52,42 @@ def sigint_handler() -> None:
     die(2)
 
 # end of sigint_handler()
+
+def parse_namemap(namemap_fn:str) -> Dict:
+    """Parse chromosome name-map file.
+
+    Parameters
+    ----------
+    namemap_fn : str
+        path to name-map file
+
+    Returns
+    -------
+        dict
+    """
+
+    if not isinstance(namemap_fn, str):
+        errmsg = "\n\nERROR: expected str, got {}.\n"
+        raise TypeError(errmsg.format(type(namemap_fn).__name__))
+    chroms_namemap = dict()
+    if namemap_fn == NOMAP:  # no name-map file given -> return empty dict
+        assert not bool(chroms_namemap)
+    else:  # name-map file is given
+        if not os.path.isfile(namemap_fn):
+            errmsg = "\n\nERROR: Unable to find {}.\n"
+            raise FileNotFoundError(errmsg.format(namemap_fn))
+        try:
+            with open(namemap_fn, mode="r") as infile:
+                for line in infile:
+                    chrom, name = line.strip().split()
+                    chroms_namemap.update({chrom:name})
+        except:
+            errmsg = "\n\nERROR: a problem was encountered while reading {}.\n"
+            raise IOError(errmsg.format(namemap_fn))
+        finally:
+            infile.close()
+        assert bool(chroms_namemap)
+    return chroms_namemap
 
 
 def isListEqual(lst1: List, lst2: List) -> bool:

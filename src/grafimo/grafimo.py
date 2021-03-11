@@ -42,21 +42,23 @@ def buildvg(args_obj: BuildVG) -> None:
     printWelcomeMsg()
 
     # if verbose == True will be printed a lot of unusefull stuff
-    verbose = args_obj.get_verbose()
+    verbose = args_obj.verbose
 
     print("\n\nBuilding the VG for chromosome:")
-    for c in args_obj.get_chroms():
+    for c in args_obj.chroms:
         print(c, end=" ")
     print("\n")  # newline
 
     if verbose:
         print("User parameters:")
-        print("\t- Reference genome: ", args_obj.get_reference_genome())
-        print("\t- VCF file: ", args_obj.get_vcf())
-        print("\t- Reindex: ", args_obj.get_reindex())
-        print("\t- Chromosomes: ", args_obj.get_chroms())
-        print("\t- Cores: ", args_obj.get_cores())
-        print("\t- Output directory: ", args_obj.get_outdir())
+        print("\t- Reference genome: ", args_obj.reference_genome)
+        print("\t- VCF file: ", args_obj.vcf)
+        print("\t- Reindex: ", args_obj.reindex)
+        print("\t- Chromosomes: ", args_obj.chroms)
+        print("\t- Chromosome prefix: ", args_obj.chroms_prefix)
+        print("\t- Name-map: ", args_obj.namemap)
+        print("\t- Cores: ", args_obj.cores)
+        print("\t- Output directory: ", args_obj.outdir)
         print("\t- Verbose: ", verbose)
         print("\t- Test mode: ", args_obj.get_test())
     # end if
