@@ -86,13 +86,16 @@ See https://github.com/pinellolab/GRAFIMO/wiki or https://github.com/InfOmics/GR
 from grafimo.GRAFIMOArgumentParser import GRAFIMOArgumentParser
 from grafimo.workflow import BuildVG, Findmotif
 from grafimo.utils import die, initialize_chroms_list, isJaspar_ff, isMEME_ff, \
-    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS, anydup
+    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS, anydup, exception_handler
 from grafimo.grafimo import __version__, buildvg, findmotif
 from grafimo.GRAFIMOException import DependencyError
-import multiprocessing as mp
+
 from typing import List, Optional
+from glob import glob
+
+import multiprocessing as mp
+
 import argparse
-import glob
 import time
 import sys
 import os
@@ -119,7 +122,7 @@ def get_parser() -> GRAFIMOArgumentParser:
     # start commandline arguments parsing
 
     # general options
-    group = parser.add_argument_group("Options")
+    group = parser.add_argument_group("General options")
     group.add_argument("-h", "--help", action="help", help="Show this help " 
                        "message and exit.")
     group.add_argument("--version", action="version", help="Show software "
@@ -324,9 +327,10 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                 "\"--debug\" does not accept any positional argument"
             )
 
+        #---------------------- buildvg options -----------------------#
+
         buildvg_err_msg: str = "Unexpected arguments for \"grafimo buildvg\": \"{}\""
 
-        # checks for buildvg workflow
         if args.workflow == "buildvg":
 
             if args.graph_genome_dir:
@@ -388,7 +392,7 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                 if (args.linear_genome.split('.')[-1] != 'fa' and
                         args.linear_genome.split('.')[-1] != 'fasta'):
                     parser.error(
-                        "The reference genome  file must be in FASTA format"
+                        "The reference genome file must be in FASTA format"
                     )
                     die(1)
                 else:
@@ -397,8 +401,6 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                             "Unable to find {}".format(args.linear_genome))
                         die(1)
                     args.linear_genome = os.path.abspath(args.linear_genome)
-                # end if
-
                 # VCF --> the VCF file must have been compressed with
                 # bgzip (https://github.com/samtools/tabix)
                 if (args.vcf.split(".")[-1] != "gz" and 
@@ -419,8 +421,9 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                     args.chroms_build = [ALL_CHROMS]  # use all chromosome 
                 else:
                     if anydup(args.chroms_build):
-                        parser.error("Duplicated chromosome names given to "
-                        "\"--chroms-build\"")
+                        parser.error(
+                            "Duplicated chromosome names given to \"--chroms-build\""
+                        )
 
                 # chromosome name-map
                 if args.chroms_namemap_build != NOMAP:
@@ -428,7 +431,6 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                         parser.error(
                             "Unable to locate {}".format(args.chroms_namemap_build)
                         )
-
                 if (args.chroms_prefix_build and args.chroms_namemap_build != NOMAP):
                     parser.error(
                         "\"--chroms-prefix-build\" and \"chroms-namemap-build\" "
@@ -444,271 +446,247 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
 
                 if args.verbose:
                     end_args_parse: float = time.time()
-                    print("Arguments parsed in %.2fs" % 
+                    print("Arguments parsed in %.2fs." % 
                           (end_args_parse - start_args_parse))
             # end if
         # end if
-
-        findmotif_err_msg = "Invalid arguments for grafimo findmotif"
         
-        # checks for findmotif workflow
+        #---------------------- findmotif options -----------------------#
+
+        findmotif_err_msg: str = "Unexpected arguments for \"grafimo findmotif\": \"{}\""
+
         if args.workflow == "findmotif":
             if args.linear_genome:
-                parser.error(findmotif_err_msg)
+                parser.error(findmotif_err_msg.format("-l, --linear-genome"))
                 die(1)
-
             elif args.vcf:
-                parser.error(findmotif_err_msg)
+                parser.error(findmotif_err_msg.format("-v, --vcf"))
                 die(1)
-
-            elif args.reindex:  # if default value is ignored
-                parser.error(findmotif_err_msg)
+            elif args.chroms_build:
+                parser.error(findmotif_err_msg.format("--chroms-build"))
+            elif args.chroms_prefix_build: 
+                parser.error(findmotif_err_msg.format("--chroms-prefix-build"))
+            elif args.chroms_namemap_build != NOMAP:
+                parser.error(findmotif_err_msg.format("--chroms-namemap-build"))
+            elif args.reindex:  # if default ignored
+                parser.error(findmotif_err_msg.format("--reindex"))
                 die(1)
-
             elif not args.graph_genome_dir and not args.graph_genome:
                 parser.error(
-                    "No genome variation graph or directory containing them given")
+                    "No arguments given for both \"--genome-graph\" and \"--genome-graph-dir\""
+                )
                 die(1)
-
             elif not args.bedfile:
                 parser.error("No BED file given")
                 die(1)
-
             elif not args.motif:
-                parser.error("No motif file (MEME of JASPAR format) given")
+                parser.error("No motif PWM given")
                 die(1)
-
             else:
-
-                # only one between graph_genome and graph_genome_dir 
-                # are allowed
+                # only one between graph_genome and graph_genome_dir is allowed
                 if args.graph_genome and args.graph_genome_dir:
-                    parser.error("Invalid arguments for grafimo buildvg")
+                    parser.error(
+                        "Only one argument between \"--genome-graph\" and \"--genome-graph-dir\""
+                        " can be used"
+                    )
                     die(1)
 
-                # check graph_genome
+                # genome graph
                 if args.graph_genome:
-                    if (args.graph_genome.split('.')[-1] != 'xg' and
-                            args.graph_genome.split('.')[-1] != 'vg'):
+                    if (args.graph_genome.split('.')[-1] != "xg" and
+                            args.graph_genome.split('.')[-1] != "vg"):
                         parser.error(
-                            "Cannot use the given genome variation graph (only "
-                            "VG or XG format allowed)")
+                            "Unrecognized genome variation graph format. Only"
+                            "VG and XG format are allowed"
+                        )
                         die(1)
-
                     elif not os.path.isfile(args.graph_genome):
                         parser.error(
-                            "Unable to find the given variation genome graph")
+                            "Unable to locate {}".format(args.graph_genome)
+                        )
                         die(1)
-
                     else:
-                        # it is safer to use absolute path to avoid bugs
-                        graph_genome: str = os.path.abspath(args.graph_genome)  
-                        args.graph_genome = graph_genome
-                    # end if
-                # end if
+                        # using absolute path avoid potential problems
+                        args.graph_genome = os.path.abspath(args.graph_genome)
 
-                # check graph_genome_dir
+                # genome graphs directory
                 if args.graph_genome_dir:
                     if not os.path.isdir(args.graph_genome_dir):
                         parser.error(
-                            "Cannot find the given directory containing the "
-                            "genome variation graphs")
+                            "Unable to locate {}".format(args.graph_genome_dir)
+                        )
                         die(1)
-
-                    if args.graph_genome_dir[-1] == '/':
-                        graph_genome_dir = args.graph_genome_dir
-
-                    else:
-                        graph_genome_dir = ''.join([args.graph_genome_dir, '/'])
-                    # end if
-
-                    if len(glob.glob(graph_genome_dir + '*.xg')) <= 0:
+                    if len(glob(os.path.join(args.graph_genome_dir, "*.xg"))) <= 0:
                         parser.error(
-                            ' '.join(['No XG genome variation graph found in', 
-                                      graph_genome_dir]))
+                            "No genome variation graph found in {}".format(args.graph_genome_dir)
+                        )
                         die(1)
-
                     else:
-                        graph_genome_dir: str = os.path.abspath(graph_genome_dir)
-                        args.graph_genome_dir = graph_genome_dir
-                    # end if
-                # end if
+                        # using absolute path avoid potential problems
+                        args.graph_genome_dir = os.path.abspath(args.graph_genome_dir)
 
-                # check BED file
+                # BED file
                 if args.bedfile:
-                    if args.bedfile.split('.')[-1] != 'bed':
-                        parser.error('Incorrect BED file given')
+                    bedformat = args.bedfile.split(".")[-1]
+                    if bedformat != "bed":
+                        parser.error(
+                            "Expected genomic coordinates in BED file, got {} file ".format(
+                                bedformat
+                            )
+                        )
                         die(1)
-
                     else:
-                        bedfile: str = args.bedfile
-
-                        if len(glob.glob(bedfile)) <= 0:
-                            parser.error('Cannot find the given BED file')
-                    # end if
-
+                        if not os.path.isfile(args.bedfile):
+                            parser.error(
+                                "Unable to locate {}".format(args.bedfile)
+                            )
                 else:
-                    parser.error('No BED file given')
-                # end if
+                    parser.error("No BED file given")
 
-                # check motif file
+                # motif pwm
                 if not args.motif:
-                    parser.error('No motif given')
+                    parser.error("No motif PWM given")
 
                 else:
                     motifs: List[str] = args.motif
-
-                    # check if the given motifs exist
                     for m in motifs:
                         if not isMEME_ff(m) and not isJaspar_ff(m):
-                            parser.error("Unrecognized motif file format (only MEME or JASPAR allowed)")
+                            parser.error(
+                                "Unrecognized motif PWM file format: {}. Allowed formats: MEME and JASPAR".format(
+                                    m.split(".")[-1]
+                                )
+                            )
                             die(1)
+                        if not os.path.isfile(m):
+                            parser.error("Unable to locate {}".format(m))
 
-                        if len(glob.glob(m)) <= 0:
-                            parser.error('Cannot find motif file: ' + m)
-                            die(1)
-                    # end for
-                # end if
-
-                # check background file
+                # background file
                 if args.bgfile != 'UNIF':
-                    bgfile: str = args.bgfile
+                    if not os.path.isfile(args.bgfile):
+                        parser.error("Unable to locate {}".format(args.bgfile))
 
-                    if len(glob.glob(bgfile)) <= 0:
-                        parser.error('Cannot find the given background file')
-                        die(1)
-                # end if
-
-                # check pseudocount
+                # pseudocount
                 if args.pseudo <= 0:
                     parser.error(
-                        'The pseudocount cannot be less than or equal 0')
+                        "Pseudocount values must be > 0, got {}".format(args.pseudo))
                     die(1)
 
-                # check threshold
+                # statistical significance threshold
                 if args.threshold <= 0 or args.threshold > 1:
-                    parser.error('The pvalue threshold must be between 0 and 1')
+                    parser.error(
+                        "Motif statistical significance threshold must be between 0 and 1")
                     die(1)
 
-                # check q-value flag
+                # q-value flag
                 if (not isinstance(args.no_qvalue, bool) or
                         (args.no_qvalue != False and args.no_qvalue != True)):
-                    parser.error(
-                        "The --qvalue parameter accepts only True or False as "
-                        "values")
+                    parser.error("\"--qvalue\" accepts only True or False values")
                     die(1)
 
-                # check no reverse flag
+                # no reverse flag
                 if (not isinstance(args.no_reverse, bool) or
                         (args.no_reverse != False and args.no_reverse != True)):
-                    parser.error(
-                        "The --no-reverse parameter accepts only True or False "
-                        "as values")
+                    parser.error("\"--no-reverse\" accepts only True or False values")
                     die(1)
 
-                # check text only flag
+                # text only flag
                 if (not isinstance(args.text_only, bool) or
                         (args.text_only != False and args.text_only != True)):
-                    parser.error(
-                        "The --text-only parameter accepts only True or False "
-                        "values")
+                    parser.error("\"--text-only\" accepts only True or False values")
                     die(1)
 
-                # check recombinant flag
+                # chromosome to consider during VG scan
+                if len(args.chroms_find) == 0:
+                    args.chroms_find = [ALL_CHROMS]  # use all chromosome 
+                else:
+                    if anydup(args.chroms_find):
+                        parser.error(
+                            "Duplicated chromosome names given to \"--chroms-find\""
+                        )
+
+                # chromosome name-map
+                if args.chroms_namemap_find != NOMAP:
+                    if not os.path.isfile(args.chroms_namemap_find):
+                        parser.error(
+                            "Unable to locate {}".format(args.chroms_namemap_find)
+                        )
+                if (args.chroms_prefix_find and args.chroms_namemap_find != NOMAP):
+                    parser.error(
+                        "\"--chroms-prefix-find\" and \"chroms-namemap-find\" "
+                        "cannot used together. Choose one of those options"
+                    )
+
+                # recomb flag
                 if (not isinstance(args.recomb, bool) or
                         (args.recomb != False and args.recomb != True)):
-                    parser.error(
-                        "The --recomb parameter accepts only True or False values")
+                    parser.error("\"--recomb\" accepts only True or False values")
                     die(1)
 
                 # out directory
-                if args.out == '':  # default option
+                if args.out == "":  # default option
                     args.out = DEFAULT_OUTDIR 
-                    
-                # check threshold on q-value flag
+
+                # threshold on q-value flag
                 if (not isinstance(args.qval_t, bool) or
                         (args.qval_t != False and args.qval_t != True)):
-                    parser.error
-                    ("The --qvalueT parameter accepts only True or False as values")
+                    parser.error("\"--qvalueT accepts only True or False values")
                     die(1)
-
                 elif args.no_qvalue == True and args.qval_t == True:
                     parser.error(
-                        "Cannot apply the threshold on q-values if you don't "
-                        "want them")
+                        "Unable to apply statistical significance threshold on"
+                        " q-values if you don't want them")
                     die(1)
 
-                # check the number of graph regions to store as PNG images
+                # number of graph regions to store as PNG images
                 if args.top_graphs < 0:
-                    parser.error(
-                        "The number of region graphs to show must be positive")
-
+                    parser.error("Negative number of regions to display")
+                
                 workflow: Findmotif = Findmotif(args)
 
                 if args.verbose:
                     end_args_parse: float = time.time()
-                    print("Arguments parsed in %.2fs" % 
+                    print("Arguments parsed in %.2fs." % 
                           (end_args_parse - start_args_parse))
-
             # end if
         # end if
 
-        # check that external dependencies are satisfied
+        # chck that external dependencies are satisfied
         if args.verbose:
-            print("Checking GRAFIMO external dependencies " + str(EXT_DEPS))
+            sys.stderr.write("Checking GRAFIMO external dependencies {}\n".format(EXT_DEPS))
             start_deps: float = time.time()
-
         satisfied: bool 
         deps_lack: List[str] 
-        
         satisfied, deps_lack = check_deps()
-
         if not satisfied and len(deps_lack) > 0:
-            raise DependencyError("\n\nERROR: The following dependencies are not" 
-                                  " sastisfied: " + str(deps_lack) +
-                                  "\nPlease, solve them before running GRAFIMO")
-
+            errmsg = "Some dependencies are not satisfied: {}.\nPlease solve them before running GRAFIMO.\n"
+            exception_handler(DependencyError, errmsg.format(deps_lack), args.debug)
         elif not satisfied and len(deps_lack) <= 0:
-            raise DependencyError("Some dependencies were found, but was not "
-                                  "possible to track them.\n" 
-                                  "Be sure they are available in system PATH")
-        # end if
+            errmsg = "Dependencies satisfied, but unable to recover them.\n Be sure they are in system PATH.\n"
+            exception_handler(DependencyError, errmsg, args.debug)
 
         if args.verbose and satisfied:
             end_deps: float = time.time()
-            print("Dependencies correctly satisfied")
-            print("Dependencies checked in %.2fs" % (end_deps - start_deps))
+            print("Dependencies satisfied.")
+            print("Dependencies checked in %.2fs." % (end_deps - start_deps))
 
         #---------------------------------------------------------------
         # dependency check was ok, so we go to workflow selection:
         #   * construction of the genome variation graph for 
         #     each chromosome or a user defined subset of them
         #   * scan of a precomputed VG or a set of precomputed VG
-
-        if isinstance(workflow, BuildVG):
-            # build the VG for each chromosome or a user defined subset 
-            # of them
-            buildvg(workflow, args.debug)
-
-        elif isinstance(workflow, Findmotif):
-            # scan a precomputed VG or a set of VGs
-            findmotif(workflow)
-
+        if isinstance(workflow, BuildVG): buildvg(workflow, args.debug)
+        elif isinstance(workflow, Findmotif): findmotif(workflow, args.debug)
         else:
-            raise ValueError("Unknown arguments object type")
-        # end if
-
+            errmsg = "Expected BuildVG or Findmotif, got {}.\n"
+            exception_handler(TypeError, errmsg.format(type(workflow).__name__), args.debug)
+        
         end: float = time.time()  # GRAFIMO execution finishes here
-
-        print("Elapsed time %.2fs" % (end - start))
+        print("Elapsed time %.2fs." % (end - start))
 
     except KeyboardInterrupt:
         sigint_handler()
-
     finally:
         pass
-    # end try
-
 # end of main()
 
 

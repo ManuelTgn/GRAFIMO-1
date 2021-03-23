@@ -6,9 +6,12 @@ one and when a wrong argument is given GRAFIMO reminds the user
 how to call the command-line help. 
 """
 
-from argparse import ArgumentParser, SUPPRESS, HelpFormatter
 from grafimo.grafimo import __version__
+
+from argparse import ArgumentParser, SUPPRESS, HelpFormatter
 from typing import List, Tuple, Dict, Optional
+from colorama import Fore, init 
+
 import sys
 
 
@@ -97,7 +100,7 @@ class GRAFIMOArgumentParser(ArgumentParser):
             Message which will be shown when raising an error
         """
 
-        errmsg = "\nERROR: {}.\n\nRun \"grafimo --help\" to see usage\n\n"
+        errmsg = Fore.RED + "\nERROR: " +  "{}." + Fore.RESET + "\n\nRun \"grafimo --help\" to see usage\n\n"
         sys.stderr.write(errmsg.format(msg))
         sys.exit(2)
 

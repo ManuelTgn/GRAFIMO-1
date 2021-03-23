@@ -20,7 +20,7 @@ space on disk and save memory when scanning it.
 """
 
 
-from grafimo.utils import die, sigint_handler, exception_handler, ALL_CHROMS
+from grafimo.utils import die, sigint_handler, ALL_CHROMS, exception_handler
 from grafimo.workflow import BuildVG
 from grafimo.GRAFIMOException import VGException, ValueException, \
     SubprocessError, FileReadingException

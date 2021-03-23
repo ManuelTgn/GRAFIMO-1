@@ -189,7 +189,7 @@ class BuildVG(Workflow):
 
 
     def _get_chroms_num(self) -> int:
-        if self._chroms_num == -1:
+        if self._chroms_num < -1:
             raise ValueError("\n\nERROR: Forbidden number of chromosomes.")
         else:
             return self._chroms_num
@@ -364,14 +364,16 @@ class Findmotif(Workflow):
     """
 
     #-------------------------------------------------------------------
-    # Findmotif atrtributes
-    #-------------------------------------------------------------------
+    # Findmotif attributes
+    #
     _graph_genome: str = None
     _graph_genome_dir: str = None
     _bedfile: str
-    _motif: str
+    _motif: list
     _chroms: List
-    _chroms_num: int = -1
+    _chroms_num: int
+    _chroms_prefix: str
+    _chroms_namemap: Dict
     _bgfile: str
     _pseudo: float
     _thresh: float
@@ -384,7 +386,7 @@ class Findmotif(Workflow):
     _text_only: bool
     _qvalueT: bool
     _verbose: bool
-    _test: bool = False  # used to test the findmotif worflow (manually set)
+    _test: bool = True  # used to test the findmotif worflow (manually set)
 
     # the following variables cannot be both True at the same time
     _has_graph_genome: bool = False
@@ -393,59 +395,56 @@ class Findmotif(Workflow):
 
     #-------------------------------------------------------------------
     # Findmotif methods
+    #
+
     #-------------------------------------------------------------------
+    # BuildVG methods
+    #
+
+    # these errors should never appear --> no need for error formatting
+    # can assume that debug mode == True
     def __init__(self, args):
-        errmsg: str = "\n\nERROR: incorrect command line arguments object type"
+        errmsg: str = "\n\nERROR: commandline parsing failed. Type mismatch: expected {}, got {} instance.\n"
         if not isinstance(args, Namespace):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("Namespace", type(args).__name__))
         if not isinstance(args.graph_genome, str):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.graph_genome).__name__))
         if not isinstance(args.graph_genome_dir, str):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.graph_genome_dir).__name__))
         if not isinstance(args.bedfile, str):
-            raise ValueError(errmsg)
-
-        if not isinstance(args.chroms, list):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.bedfile).__name__))
+        if not isinstance(args.motif, list):
+            raise TypeError(errmsg.format("list", type(args.motif).__name__))
+        if not isinstance(args.chroms_find, list):
+            raise TypeError(errmsg.format("str", type(args.chroms).__name__))
+        if not isinstance(args.chroms_prefix_find, str):
+            raise TypeError(errmsg.format("str", type(args.chroms_prefix_find).__name__))
+        if not isinstance(args.chroms_namemap_find, str):
+            raise TypeError(errmsg.format("str", type(args.chroms_namemap_find).__name__))
         if not isinstance(args.bgfile, str):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.bgfile).__name__))
         if not isinstance(args.pseudo, float):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("float", type(args.pseudo).__name__))
         if not isinstance(args.threshold, float):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("float", type(args.threshold).__name__))
         if not isinstance(args.out, str):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("str", type(args.out).__name__))
         if not isinstance(args.cores, int):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("int", type(args.cores).__name__))
         if not isinstance(args.recomb, bool):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("bool", type(args.recomb).__name__))
         if not isinstance(args.top_graphs, int):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("int", type(args.top_graphs).__name__))
         if not isinstance(args.no_qvalue, bool):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("bool", type(args.no_qvalue).__name__))
         if not isinstance(args.no_reverse, bool):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("bool", type(args.no_reverse).__name__))
         if not isinstance(args.text_only, bool):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("bool", type(args.text_only).__name__))
         if not isinstance(args.qval_t, bool):
-            raise ValueError(errmsg)
-
+            raise TypeError(errmsg.format("bool", type(args.qval_t).__name__))
         if not isinstance(args.verbose, bool):
-            raise ValueError(errmsg)
+            raise TypeError(errmsg.format("bool", type(args.verbose).__name__))
 
         if args.graph_genome:
             self._graph_genome = args.graph_genome
@@ -455,16 +454,15 @@ class Findmotif(Workflow):
             self._graph_genome_dir = args.graph_genome_dir
             self._has_graph_genome_dir = True
             self._has_graph_genome = False
-
         if self._has_graph_genome and self._has_graph_genome_dir:
-            errmsg = "\n\nERROR: cannot be given both a path to a VG and a "
-            errmsg += "directory containing them"
+            errmsg = "Cannot be given both a path to a VG and a directory containing them"
             raise PermissionError(errmsg)
-
         self._bedfile = args.bedfile
         self._motif = args.motif
-        self._chroms = args.chroms
-        self._chroms_num = len(args.chroms)
+        self._chroms = args.chroms_find
+        self._chroms_num = len(args.chroms_find)
+        self._chroms_prefix = args.chroms_prefix_find
+        self._chroms_namemap = args.chroms_namemap_find
         self._bgfile = args.bgfile
         self._pseudo = args.pseudo
         self._thresh = args.threshold
@@ -479,129 +477,220 @@ class Findmotif(Workflow):
         self._verbose = args.verbose
 
 
-    def get_graph_genome(self) -> str:
+    def _get_graphgenome(self) -> str:
         if not self._has_graph_genome:
-            raise ValueError("No genome graph available")
+            raise AttributeError("\n\nERROR: \"self._graph_genome\" is empty.")
         else:
             return self._graph_genome
 
+    @property
+    def graph_genome(self):
+        return self._get_graphgenome()
 
-    def get_graph_genome_dir(self) -> str:
+
+    def _get_graphgenome_dir(self) -> str:
         if not self._has_graph_genome_dir:
-            raise ValueError("No genome graph directory given")
+            raise AttributeError("\n\nERROR: \"self._graph_genome_dir\" is empty.")
         else:
             return self._graph_genome_dir
 
+    @property
+    def graph_genome_dir(self):
+        return self._get_graphgenome_dir()
 
-    def get_bedfile(self) -> str:
+
+    def _get_bedfile(self) -> str:
         if not self._bedfile:
-            raise ValueError("No BED file found")
+            raise AttributeError("\n\nERROR: \"self._bedfile\" is empty.")
         else:
             return self._bedfile
 
+    @property
+    def bedfile(self):
+        return self._get_bedfile()
 
-    def get_motif(self) -> str:
+
+    def _get_motif(self) -> str:
         if not self._motif:
-            raise ValueError("NO motif file (MEME or JASPAR format) found")
+            raise AttributeError("\n\nERROR: \"self._motif\" is empty.")
         else:
             return self._motif
 
+    @property
+    def motif(self):
+        return self._get_motif()
 
-    def get_chroms(self) -> List:
+
+    def _get_chroms(self) -> List:
         if self._chroms is None:
-            raise ValueError("No chromosomes list found")
+            raise AttributeError("\n\nERROR: \"self._chroms\" is empty.")
         else:
             return self._chroms
 
+    @property
+    def chroms(self):
+        return self._get_chroms()
 
-    def get_chroms_num(self) -> int:
-        if self._chroms_num == -1:
-            raise ValueError("Forbidden number of chromosomes found")
+
+    def _get_chroms_num(self) -> int:
+        if self._chroms_num < 0:
+            raise AttributeError("\n\nERROR: Forbidden number of chromosomes.")
         else:
             return self._chroms_num
 
+    @property
+    def chroms_num(self):
+        return self._get_chroms_num()
 
-    def get_bgfile(self) -> str:
+    
+    def _get_chroms_prefix(self) -> str:
+        if not self._chroms_prefix:
+            raise AttributeError("\n\nERROR: \"self._chroms_prefix\" is empty")
+        else:
+            return self._chroms_prefix
+
+    @property
+    def chroms_prefix(self):
+        return self._get_chroms_prefix()
+
+    
+    def _get_chroms_namemap(self):
+        return self._chroms_namemap
+
+    @property
+    def namemap(self):
+        return self._get_chroms_namemap()
+
+
+    def _get_bgfile(self) -> str:
         if not self._bgfile:
-            raise ValueError("No background file found")
+            raise AttributeError("\n\nERROR: \"self._bgfile\" is empty.")
         else:
             return self._bgfile
 
+    @property
+    def bgfile(self):
+        return self._get_bgfile()
 
-    def get_pseudo(self) -> float:
+
+    def _get_pseudo(self) -> float:
         if not self._pseudo:
-            raise ValueError("No pseudocount found")
+            raise AttributeError("\n\nERROR: \"self._pseudo\" is empty.")
         else:
             return self._pseudo
 
+    @property
+    def pseudo(self):
+        return self._get_pseudo()
 
-    def get_threshold(self) -> float:
+
+    def _get_threshold(self) -> float:
         if not self._thresh:
-            raise ValueError("No threshold found")
+            raise AttributeError("\n\nERROR: \"self._thresh\" is empty.")
         else:
             return self._thresh
 
+    @property
+    def threshold(self):
+        return self._get_threshold()
 
-    def get_outdir(self) -> str:
+
+    def _get_outdir(self) -> str:
         if not self._outdir:
-            raise ValueError("No output directory found")
+            raise AttributeError("\n\nERROR: \"self._outdir\" is empty.")
         else:
             return self._outdir
 
+    @property
+    def outdir(self):
+        self._get_outdir()
 
-    def get_cores(self) -> int:
+
+    def _get_cores(self) -> int:
         if not self._cores:
-            raise ValueError("Unknown number of cores to use")
+            raise AttributeError("\n\nERROR: \"self._cores\" is empty.")
         else:
             return self._cores
 
+    @property
+    def cores(self):
+        return self._get_cores()
 
-    def get_recomb(self) -> bool:
+
+    def _get_recomb(self) -> bool:
         return self._recomb
 
+    @property
+    def recomb(self):
+        return self._get_recomb()
 
-    def get_top_graphs(self) -> int:
+
+    def _get_top_graphs(self) -> int:
         if self._top_graphs < 0:
-            raise ValueError("The number of graph images to retrieve cannot be negative")
+            raise AttributeError("\n\nERROR: Forbidden number of VGs to print.")
         else:
             return self._top_graphs
 
+    @property
+    def top_graphs(self):
+        return self._get_top_graphs()
 
-    def get_no_qvalue(self) -> bool:
+
+    def _get_no_qvalue(self) -> bool:
         return self._no_qvalue
 
+    @property
+    def noqvalue(self):
+        return self._get_no_qvalue()
 
-    def get_no_reverse(self) -> bool:
+
+    def _get_no_reverse(self) -> bool:
         return self._no_rev
+    
+    @property
+    def noreverse(self):
+        return self._get_no_reverse()
 
 
-    def get_text_only(self) -> bool:
+    def _get_text_only(self) -> bool:
         return self._text_only
 
+    @property
+    def text_only(self):
+        return self._get_text_only()
 
-    def get_qvalueT(self) -> bool:
+
+    def _get_qvalueT(self) -> bool:
         return self._qvalueT
 
+    @property
+    def qvalueT(self):
+        return self._get_qvalueT()
 
-    def get_verbose(self) -> bool:
+
+    def _get_verbose(self) -> bool:
         return self._verbose
+
+    @property
+    def verbose(self):
+        return self._get_verbose()
 
 
     def get_test(self) -> bool:
         return self._test
 
 
-    def has_graph_genome(self) -> bool:
+    def has_graphgenome(self):
         return self._has_graph_genome
 
 
-    def has_graph_genome_dir(self) -> bool:
+    def has_graphgenome_dir(self):
         return self._has_graph_genome_dir
 
 
     def set_xg(self, vg: str) -> None:
         if vg.split('.')[-1] != 'xg':
-            raise ValueError("Only XG accepted")
+            raise ValueError("\n\nERROR: Only XG genome variation graphs accepted")
         self._graph_genome = vg
 
 # end of Findmotif

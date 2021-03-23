@@ -1,10 +1,10 @@
-"""Custom Exception redefinition for GRAFIMO.
+"""Custom Exceptions for GRAFIMO and exception hook handler definition.
 
-The base class GRAFIMOException, which inherits from Exception, is 
-then extended with custome exception fitting possible errors which can
-occurr while running GRAFIMO analysis
-
+The base class GRAFIMOException inherits from Exception. 
+GRAFIMOException is extended with custom exceptions, handling errors
+occurring during GRAFIMO run.
 """
+
 
 class GRAFIMOException(Exception):
     """Class to represent an excpetion which can occur ehile running 
