@@ -544,10 +544,7 @@ class Findmotif(Workflow):
 
     
     def _get_chroms_prefix(self) -> str:
-        if not self._chroms_prefix:
-            raise AttributeError("\n\nERROR: \"self._chroms_prefix\" is empty")
-        else:
-            return self._chroms_prefix
+        return self._chroms_prefix
 
     @property
     def chroms_prefix(self):

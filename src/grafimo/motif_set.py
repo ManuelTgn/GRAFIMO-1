@@ -8,7 +8,6 @@ find the occurrences of more than one single motif.
 """
 
 from grafimo.motif import Motif
-
 from typing import List
 
 
@@ -47,16 +46,16 @@ class MotifSet(object):
 
     #-------------------------------------------------------------------
     # MotifSet attributes
-    #
-    _motifs: List[Motif] = list()
-    _motifs_num: int = 0
+    #-------------------------------------------------------------------
+    _motifs: List[Motif]
+    _motifs: int
+
+    _motifs = list()
+    _motifs_num = 0 
 
     #-------------------------------------------------------------------
     # MotifSet methods
-    #
-
-    # these errors should never appear --> no need for error formatting
-    # can assume that debug mode == True
+    #-------------------------------------------------------------------
     def __init__(self):
         pass
 
@@ -64,82 +63,74 @@ class MotifSet(object):
     def __iter__(self):
         return MotifSetIterator(self)
 
-    
-    def __len__(self):
-        return len(self._motifs)
-
 
     def addMotif(self, mtfs: List[Motif]) -> None:
         """Add a list object containing Motif instanced to the Motifset
-        object.
-
-        ...
+        object
 
         Parameters
         ----------
         mtfs : list
-            list containing of Motif objects
+            list containing the Motif objects to add to the MotifSet
         """
 
         errmsg: str
         if not isinstance(mtfs, list):
-            errmsg = "\n\nERROR: Expected list, got {}.\n"
-            raise TypeError(errmsg.format(type(mtfs).__name__))
+            errmsg = "\n\nERROR: The motifs to add to the set must be in a list"
+            raise ValueError(errmsg)
+
         if not all(isinstance(m, Motif) for m in mtfs):
-            errmsg = "\n\nERROR: Expected Motif, got {}.\n"
-            raise TypeError(errmsg.format(type(m).__name__))
-        self._motifs += mtfs  # add motifs to self
-        oldsize = self._motifs_num   
-        self._motifs_num += len(mtfs)  # update the motif set size
+            errmsg = "\n\nERROR: Only Motif instances can be added to MotifSet"
+            raise ValueError(errmsg)
+
+        motifs: List[Motif]
+        motifs = self._motifs
+        motifs += mtfs  # add the motifs
+        self._motifs = motifs
+
+        self._motifs_num += len(mtfs)  # update the motifs number
         assert self._motifs_num > 0
-        assert self._motifs_num == (oldsize + len(mtfs))
-        
+
 
     def getMotifsList(self) -> List[Motif]:
-        """Returns a list containing the Motif instances of MotifSet.
-
-        ...
+        """Returns a list containing the Motif instances contained in 
+        MotifSet
 
         Returns
         -------
         list
-            list of Motif objects contained in MotifSet
+            list containing the Motif objects contained in MotifSet
         """
 
         errmsg: str
         if not self._motifs:
-            errmsg = "\n\nERROR: The MotifSet object is empty.\n"
-            raise ValueError(errmsg)
-        if self._motifs_num == 0:
-            errmsg = "\n\nERROR: The MotifSet object is empty.\n"
-            raise ValueError(errmsg)
+            errmsg = "\n\nERROR: trying to access an empty list of motifs"
+            raise Exception(errmsg)
+
         return self._motifs
    
 
-    def _size(self) -> int:
-        """Compute the MotifSet object size.
-
-        ...
+    def length(self) -> int:
+        """Returns the number of motifs currently contained in the 
+        MotifSet
 
         Returns
         -------
         int
-            number of motifs in MotifSet
+            number of motifs contained innthe MotifSet
         """
 
         assert self._motifs_num >= 0
         return self._motifs_num
-
-    @property
-    def size(self):
-        return self._size()
 
 # end of MotifSet
 
 
 class MotifSetIterator:
     """
-    Iterator definition for MotifSet class. 
+    This class defines an iterator for the MotifSet class. With this 
+    class a MotifSet object can be iterated with a simple for loop, 
+    through the corresponding __iter()__ method.
 
     ...
 
@@ -153,31 +144,30 @@ class MotifSetIterator:
 
     #-------------------------------------------------------------------
     # MotifSetIterator attributes
-    #
+    #-------------------------------------------------------------------
     _motifSet: MotifSet
     _index: int
 
     #-------------------------------------------------------------------
     # MotifSetIterator methods
-    #
-
-    # these errors should never appear --> no need for error formatting
-    # can assume that debug mode == True
+    #-------------------------------------------------------------------
     def __init__(self, motifSet: MotifSet):
         errmsg: str
         if not isinstance(motifSet, MotifSet):
-            errmsg = "\n\nERROR: Expected MotifSet, got {}"
-            raise ValueError(errmsg.format(type(motifSet).__name__))
+            errmsg = "\n\nERROR: needed an instance of MotifSet"
+            raise ValueError(errmsg)
+
         self._motifSet = motifSet
         self._index = 0
 
 
     def __next__(self) -> Motif:
-        if self._index < self._motifSet.size:
+        if self._index < (self._motifSet.length()):
             motifs_lst: List[Motif] = self._motifSet.getMotifsList()
             result: Motif = motifs_lst[self._index]
             self._index += 1
             return result
+
         raise StopIteration
    
 # end of MotifSetIterator

@@ -23,7 +23,7 @@ space on disk and save memory when scanning it.
 from grafimo.utils import die, sigint_handler, ALL_CHROMS, exception_handler
 from grafimo.workflow import BuildVG
 from grafimo.GRAFIMOException import VGException, ValueException, \
-    SubprocessError, FileReadingException
+    SubprocessError, FileReadError
 from typing import List, Dict
 import subprocess
 import signal
@@ -450,7 +450,7 @@ def get_chromlist(ref_genome: str, debug: bool) -> List[str]:
             while True:
                 if line[0] != ">":
                     errmsg = "Sequence names in FASTA file should begin with \">\"\n."
-                    exception_handler(FileReadingException, errmsg, debug)
+                    exception_handler(FileReadError, errmsg, debug)
                 else:
                     seqname = line.rstrip().split()[0][1:]  # skip ">"
                 line = ifstream.readline()
@@ -464,7 +464,7 @@ def get_chromlist(ref_genome: str, debug: bool) -> List[str]:
         sigint_handler()
     except:
         errmsg = "A problem was encountered reading {}\n."
-        exception_handler(FileReadingException, errmsg.format(ref_genome), debug)
+        exception_handler(FileReadError, errmsg.format(ref_genome), debug)
     finally:
         ifstream.close()
 

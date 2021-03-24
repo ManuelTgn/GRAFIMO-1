@@ -14,10 +14,11 @@ import os
 #-----------------------------------------------------------------------
 # constant vars
 #
-DNA_ALPHABET = ['A', 'C', 'G', 'T'] 
-REV_COMPL = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
+DNA_ALPHABET = ["A", "C", "G", "T"] 
+REV_COMPL = {"A":"T", "C":"G", "G":"C", "T":"A"}
 NOMAP = "NOMAP"
 ALL_CHROMS = "use_all_chroms"
+UNIF = "unfrm_dst"
 PSEUDObg = np.double(0.0000005)
 LOG_FACTOR = 1.44269504
 RANGE = 1000
@@ -207,13 +208,15 @@ def check_deps() -> Tuple[bool, List[str]]:
 # end of check_deps()
 
 
-def isJaspar_ff(motif_file: str) -> bool:
-    """Check if the given motif file is a JASPAR file
+def isJaspar_ff(motif_file: str, debug: bool) -> bool:
+    """Check if the given motif file is a JASPAR file.
         
     Parameters
     ----------
     motif_file : str 
         motif file
+    debug : bool
+        trace the full error stack
         
     Returns
     -------
@@ -221,31 +224,33 @@ def isJaspar_ff(motif_file: str) -> bool:
         check result
     """
 
+    if not isinstance(motif_file, str):
+        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        exception_handler(TypeError, errmsg.format(type(motif_file).__name__), debug)
     if not os.path.isfile(motif_file):
-        errmsg: str = "\n\nERROR: unable to find %s" % motif_file
-        raise FileNotFoundError(errmsg)
+        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        exception_handler(FileNotFoundError, errmsg.format(motif_file), debug)
+    if os.stat(motif_file).st_size == 0:
+        errmsg = "\n\nERROR: {} seems to be empty.\n"
+        exception_handler(EOFError, errmsg.format(motif_file), debug)
 
-    if motif_file and isinstance(motif_file, str):
-        ff: str = motif_file.split('.')[-1]
-
-        if ff == 'jaspar':
-            return True
-        else:
-            return False
-
-    else:
-        return False
+    ff = motif_file.split(".")[-1]
+    if ff == "jaspar":
+        return True
+    return False
 
 # end of isJaspar_ff()
 
 
-def isMEME_ff(motif_file: str) -> bool:
-    """Check if the given motif file is a MEME file
+def isMEME_ff(motif_file: str, debug: bool) -> bool:
+    """Check if the given motif file is a MEME file.
         
     Parameters
     ----------
     motif_file : str 
         motif file
+    debug : bool
+        trace the full error stack
         
     Returns
     -------
@@ -253,20 +258,20 @@ def isMEME_ff(motif_file: str) -> bool:
         check result
     """
 
+    if not isinstance(motif_file, str):
+        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        exception_handler(TypeError, errmsg.format(type(motif_file).__name__), debug)
     if not os.path.isfile(motif_file):
-        errmsg: str = "\n\nERROR: unable to find %s" % motif_file
-        raise FileNotFoundError(errmsg)
+        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        exception_handler(FileNotFoundError, errmsg.format(motif_file), debug)
+    if os.stat(motif_file).st_size == 0:
+        errmsg = "\n\nERROR: {} seems to be empty.\n"
+        exception_handler(EOFError, errmsg.format(motif_file), debug)
 
-    if motif_file and isinstance(motif_file, str):
-        ff: str = motif_file.split('.')[-1]
-
-        if ff == 'meme':
-            return True
-        else:
-            return False
-
-    else:
-        return False 
+    ifstream = open(motif_file, mode="r")
+    for line in ifstream:
+        if line.startswith("MEME version"): return True
+    return False  # no MEME version found --> improper input
 
 # end of isMEME_ff()
 
@@ -275,8 +280,8 @@ def almost_equal(value1: np.double,
                  value2: np.double,
                  slope: np.double
 ) -> bool:
-    """Check if two values are 'close' to each other. given a degree
-    of tolerance
+    """Check if two values are close to each other, given a degree
+    of tolerance (slope).
     
     Parameters
     ----------
@@ -294,7 +299,6 @@ def almost_equal(value1: np.double,
 
     if ((value1 - slope) > value2 or (value1 + slope) < value2):
         return False
-    
     return True
 
 # end of almost_equal()

@@ -24,6 +24,39 @@ class DependencyError(GRAFIMOException):
     pass
 
 
+class FileReadError(GRAFIMOException):
+    """Raise when errors occurred during generic file reading.
+    """
+    pass
+
+
+class MotifFileFormatError(GRAFIMOException):
+    """Raise when motif PWM file format is not recognized by GRAFIMO.
+    """
+    pass
+
+
+class MotifFileReadError(GRAFIMOException):
+    """Raise when errors occurred during motif PWM file parsing.
+    """
+    pass
+
+
+class BGFileError(GRAFIMOException):
+    """Raise when errors occurred during background distribution file parsing or
+    during background distribution computation.
+    """
+    pass
+
+
+class MotifProcessingError(GRAFIMOException):
+    """Raise when errors occurred during motif position weight matrix processing
+    steps.
+    """ 
+    pass
+
+
+# ------------------------------------------------------------------------------
 class NoDataFrameException(GRAFIMOException):
     """Raise when a given object is not an instance of pandas.DataFrame
     type
@@ -64,12 +97,7 @@ class NotValidMotifMatrixException(GRAFIMOException):
     pass
 
 
-class NotValidBGException(GRAFIMOException):
-    """Raise when a not valid background distribution is given to the 
-    motif object
-    """
 
-    pass
 
 
 class NotValidAlphabetException(GRAFIMOException):
@@ -86,11 +114,7 @@ class NotValidFFException(GRAFIMOException):
     pass
 
 
-class FileReadingException(Exception):
-    """Raise if is not possible to read the current file
-    """
 
-    pass
 
 
 class ValueException(GRAFIMOException):

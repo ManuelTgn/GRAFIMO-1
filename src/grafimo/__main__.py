@@ -86,7 +86,7 @@ See https://github.com/pinellolab/GRAFIMO/wiki or https://github.com/InfOmics/GR
 from grafimo.GRAFIMOArgumentParser import GRAFIMOArgumentParser
 from grafimo.workflow import BuildVG, Findmotif
 from grafimo.utils import die, initialize_chroms_list, isJaspar_ff, isMEME_ff, \
-    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS, anydup, exception_handler
+    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS, anydup, exception_handler, UNIF
 from grafimo.grafimo import __version__, buildvg, findmotif
 from grafimo.GRAFIMOException import DependencyError
 
@@ -195,7 +195,7 @@ def get_parser() -> GRAFIMOArgumentParser:
                        'MOTIF2'), help="Motif Position Weight Matrix (MEME or "
                        "JASPAR format).")
     group.add_argument("-k", "--bgfile", type=str, nargs='?', const='', 
-                       default='UNIF', metavar='BACKGROUND', help="Background "
+                       default=UNIF, metavar='BACKGROUND', help="Background "
                        "distribution file.")
     group.add_argument("-p", "--pseudo", type=float, nargs='?', const='0.1',
                        default='0.1', metavar='PSEUDOCOUNT', help="Pseudocount "
@@ -345,7 +345,7 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
             elif args.motif:
                 parser.error(buildvg_err_msg.format("-m, --motif"))
                 die(1)
-            elif args.bgfile != 'UNIF':  # if default ignored
+            elif args.bgfile != UNIF:  # if default ignored
                 parser.error(buildvg_err_msg.format("-k, --bgfile"))
                 die(1)
             elif args.pseudo != 0.1:  # if default ignored
@@ -550,7 +550,7 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                 else:
                     motifs: List[str] = args.motif
                     for m in motifs:
-                        if not isMEME_ff(m) and not isJaspar_ff(m):
+                        if not isMEME_ff(m, args.debug) and not isJaspar_ff(m, args.debug):
                             parser.error(
                                 "Unrecognized motif PWM file format: {}. Allowed formats: MEME and JASPAR".format(
                                     m.split(".")[-1]
@@ -561,7 +561,7 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                             parser.error("Unable to locate {}".format(m))
 
                 # background file
-                if args.bgfile != 'UNIF':
+                if args.bgfile != UNIF:
                     if not os.path.isfile(args.bgfile):
                         parser.error("Unable to locate {}".format(args.bgfile))
 

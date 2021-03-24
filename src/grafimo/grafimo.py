@@ -14,7 +14,6 @@ from grafimo.motif_set import MotifSet
 from grafimo.extract_regions import scan_graph
 from grafimo.res_writer import print_results, write_results
 from grafimo.score_sequences import compute_results
-from grafimo.GRAFIMOException import VGException
 from grafimo.utils import exception_handler
 
 import pandas as pd
@@ -111,6 +110,8 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
         print("\t- BED file: ", args_obj.bedfile)
         print("\t- Motif file: ", args_obj.motif)
         print("\t- Chromosomes: ", args_obj.chroms)
+        print("\t- Chromome prefix: ", args_obj.chroms_prefix)
+        print("\t- Name-map: ", args_obj.namemap)
         print("\t- Background: ", args_obj.bgfile)
         print("\t- Pseudocount: ", args_obj.pseudo)
         print("\t- Threshold: ", args_obj.threshold)
@@ -129,7 +130,7 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
 
     errmsg: str
     # if genome graph is given, check that it is indexed (XG), otherwise index it
-    if args_obj.has_graphgenome:
+    if args_obj.has_graphgenome():
         if args_obj.graph_genome.split('.')[-1] == 'vg':
             warnmsg: str = "\nWARNING: {} is not indexed. To scan a VG, it should be indexed."
             # quick IO with user
@@ -152,7 +153,7 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
                     errmsg = "\n\nERROR: An error occurred during {} indexing.\n"
                     exception_handler(VGException, errmsg.format(args_obj.graph_genome), debug) 
             else:
-                errmsg = "\n\nERROR: To scan {} are required the XG and GBWT indexes.\n")
+                errmsg = "\n\nERROR: To scan {} are required the XG and GBWT indexes.\n"
                 exception_handler(FileNotFoundError, errmsg.format(args_obj.graph_genome), debug)
             vg_name = args_obj.graph_genome.split('.vg')[-2]
             xg = ".".join([vg_name, "xg"])
@@ -166,12 +167,13 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
     for mtf in motifs:
         if verbose:
             print("Processing motif(s) in: {}".format(mtf))
-        m = get_motif_pwm(mtf, args_obj, cores)
-        if args_obj.get_test():
-            for i in range(len(m)):
-                print("Score matrix of {}:".format(mtf))
-                m[i].print("score_matrix")  
+        m = get_motif_pwm(mtf, args_obj, cores, debug)
+        #if args_obj.get_test():
+            #for i in range(len(m)):
+                #print("Score matrix of {}:".format(mtf))
+                #m[i].print("score_matrix")  
         mtfSet.addMotif(m)
+    sys.exit(3)
     for mtf in mtfSet:
         # extract sequences
         sequence_loc: str = scan_graph(mtf, args_obj)
@@ -184,8 +186,6 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
             print_results(res)
         else:
             write_results(res, mtf.getMotifID(), mtfSet.size, args_obj)
-        # end if
-    # end for
 
 # end of findmotif()
 
@@ -194,12 +194,12 @@ def printWelcomeMsg() -> None:
     """Prints the welcome message for GRAFIMO
   
     """
-    for _ in range(70): print('*', end='')
+    for _ in range(75): print('*', end='')
     msg = "\n\tWelcome to GRAFIMO v{}"
     print()  # newline
     print(msg.format(__version__))
     print()  # newline
-    for _ in range(70): print('*', end='')
+    for _ in range(75): print('*', end='')
     print()  # newline
 
 # end of printWelcomeMsg()

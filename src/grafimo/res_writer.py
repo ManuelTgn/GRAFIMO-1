@@ -14,7 +14,7 @@ The results are stored in three different files:
 """
 
 from grafimo.GRAFIMOException import VGException, SubprocessError, \
-    NoDataFrameException, FileReadingException
+    NoDataFrameException, FileReadError
 from grafimo.utils import PHASE, TP, SOURCE, unique_lst, list_data, die, \
     DEFAULT_OUTDIR
 from grafimo.workflow import Findmotif
@@ -317,7 +317,7 @@ def writeGFF3(prefix: str, data: pd.DataFrame, no_qvalue: bool) -> None:
     except:
         errmsg = ''.join(["\n\nERROR: unable to open or write data on ", prefix, 
                           ".gff"])
-        raise FileReadingException(errmsg)
+        raise FileReadError(errmsg)
     finally:
         f.close()  
     # end try

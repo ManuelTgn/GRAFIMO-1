@@ -19,7 +19,7 @@ The user can also decide to consider all possible recombinant using the
 
 
 from grafimo.GRAFIMOException import SubprocessError, NotValidFFException, \
-    FileReadingException, VGException
+    FileReadError, VGException
 from grafimo.utils import die, CHROMS_LIST, printProgressBar, sigint_handler
 from grafimo.score_sequences import ResultTmp
 from grafimo.workflow import Findmotif
@@ -470,7 +470,7 @@ def getBEDregions(bedfile: str) -> Tuple[Dict, int]:
 
     except:  # not able to read the BED file
         msg: str = ' '.join(["\n\nError: unable to read", bedfile])
-        raise FileReadingException(msg)
+        raise FileReadError(msg)
 
     else:
         return regions, region_num
