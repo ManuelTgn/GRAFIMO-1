@@ -12,7 +12,6 @@ class GRAFIMOException(Exception):
 
     It is the base for the other more specific GRAFIMO exceptions.
     """
-
     pass
 
 
@@ -20,12 +19,23 @@ class DependencyError(GRAFIMOException):
     """Raise if one of the external dependendencies needed by GRAFIMO 
     cannot be found.
     """
-
     pass
 
 
 class FileReadError(GRAFIMOException):
     """Raise when errors occurred during generic file reading.
+    """
+    pass
+
+
+class FileFormatError(GRAFIMOException):
+    """Raise when errors occurred during generic file format checks.
+    """
+    pass
+
+
+class VGError(GRAFIMOException):
+    """Raise when errors occurred during calls to VG
     """
     pass
 
@@ -142,13 +152,6 @@ class WrongPathException(GRAFIMOException):
 class SubprocessError(GRAFIMOException):
     """Raise if a subprocess call returned an exit status different 
     from 0 (an error occurred)
-    """
-
-    pass
-
-
-class VGException(GRAFIMOException):
-    """Raise when errors occur while calling VG
     """
 
     pass

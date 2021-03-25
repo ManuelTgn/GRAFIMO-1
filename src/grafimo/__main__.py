@@ -86,7 +86,7 @@ See https://github.com/pinellolab/GRAFIMO/wiki or https://github.com/InfOmics/GR
 from grafimo.GRAFIMOArgumentParser import GRAFIMOArgumentParser
 from grafimo.workflow import BuildVG, Findmotif
 from grafimo.utils import die, initialize_chroms_list, isJaspar_ff, isMEME_ff, \
-    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS, anydup, exception_handler, UNIF
+    check_deps, sigint_handler, EXT_DEPS, CHROMS_LIST, DEFAULT_OUTDIR, NOMAP, ALL_CHROMS, anydup, exception_handler, UNIF, isbed
 from grafimo.grafimo import __version__, buildvg, findmotif
 from grafimo.GRAFIMOException import DependencyError
 
@@ -527,12 +527,9 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
 
                 # BED file
                 if args.bedfile:
-                    bedformat = args.bedfile.split(".")[-1]
-                    if bedformat != "bed":
+                    if not isbed(args.bedfile, args.debug):
                         parser.error(
-                            "Expected genomic coordinates in BED file, got {} file ".format(
-                                bedformat
-                            )
+                            "The genomic coordinates must be given in UCSC BED files"
                         )
                         die(1)
                     else:
@@ -552,9 +549,8 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                     for m in motifs:
                         if not isMEME_ff(m, args.debug) and not isJaspar_ff(m, args.debug):
                             parser.error(
-                                "Unrecognized motif PWM file format: {}. Allowed formats: MEME and JASPAR".format(
-                                    m.split(".")[-1]
-                                )
+                                "Unrecognized motif PWM file format. "
+                                "{} does not follow the MEME or JASPAR format rules".format(m)
                             )
                             die(1)
                         if not os.path.isfile(m):

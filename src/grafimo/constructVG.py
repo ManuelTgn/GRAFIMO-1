@@ -22,7 +22,7 @@ space on disk and save memory when scanning it.
 
 from grafimo.utils import die, sigint_handler, ALL_CHROMS, exception_handler
 from grafimo.workflow import BuildVG
-from grafimo.GRAFIMOException import VGException, ValueException, \
+from grafimo.GRAFIMOException import VGError, ValueException, \
     SubprocessError, FileReadError
 from typing import List, Dict
 import subprocess
@@ -239,13 +239,13 @@ def construct_vg(buildvg_args: BuildVG, debug: bool) -> None:
     # build the VG for each chromosome or only for those told by user
     for chrname in chroms:
         if not bool(namemap): 
-            chrom: str = ''.join([chroms_prefix, chrname])
+            chrom: str = "".join([chroms_prefix, chrname])
         elif bool(namemap): 
             try:
                 chrom: str = namemap[chrname]
             except:
                 errmsg = "Missing out name map for chromosome \"{}\".\n'"
-                exception_handler(KeyError, errmsg, debug)
+                exception_handler(KeyError, errmsg.format(chrname), debug)
         vg: str = ''.join([".", chrom, '.vg'])
         # build VG for current chromosome
         if verbose:
@@ -253,7 +253,7 @@ def construct_vg(buildvg_args: BuildVG, debug: bool) -> None:
         code = build_vg(vg, reference, vcf, chrname, threads)
         if code != 0:
             errmsg = "An error occurred during construction of {}.\n"
-            exception_handler(VGException, errmsg.format(vg), debug)
+            exception_handler(VGError, errmsg.format(vg), debug)
         if verbose:
             end_build: float = time.time()
             msg = "Elapsed time to build {}:"   
@@ -266,7 +266,7 @@ def construct_vg(buildvg_args: BuildVG, debug: bool) -> None:
         code = indexVG(vg, vcf, threads, verbose, debug)
         if code != 0:
             errmsg = "An error occurred while indexing {}."
-            exception_handler(VGException, errmsg.format(vg), debug)
+            exception_handler(VGError, errmsg.format(vg), debug)
         if verbose:
             end_index: float = time.time()
             msg = "Elapsed time to index {}"

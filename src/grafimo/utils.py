@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple, Dict
 from shutil import which
 import pandas as pd
 import numpy as np
+import gzip
 import sys
 import os
 
@@ -274,6 +275,45 @@ def isMEME_ff(motif_file: str, debug: bool) -> bool:
     return False  # no MEME version found --> improper input
 
 # end of isMEME_ff()
+
+
+def isbed(bedfile: str, debug: bool) -> bool:
+    """Check if the given file is in UCSC BED format.
+
+    ...
+
+    Parameters
+    ----------
+    bedfile : str
+        path to bedfile
+    debug : bool
+        trace the full error stack
+
+    Returns
+    -------
+    bool
+        check result
+    """
+
+    if not isinstance(bedfile, str):
+        errmsg = "Expected str, got {}.\n"
+        exception_handler(TypeError, errmsg, debug)
+    if not os.path.isfile(bedfile):
+        errmsg = "Unble to locate {}.\n"
+        exception_handler(FileNotFoundError, errmsg, debug)
+    
+    # check if bed is gzipped
+    gzipped: bool = False
+    ff: str = bedfile.split(".")[-1]
+    if ff == "gz": gzipped = True
+    if gzipped: ifstream = gzip.open(bedfile, mode="rt")
+    else: ifstream = open(bedfile, mode="r")
+    for line in ifstream:
+        if line.startswith("chr"): 
+            if len(line.split()) >= 3: return True  # at least chrom, start, end
+            else: return False
+    # if EOF reached and no line started with chr --> False
+    return False
 
 
 def almost_equal(value1: np.double,

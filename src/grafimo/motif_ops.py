@@ -391,7 +391,7 @@ def read_MEME_motif(motif_file: str,
     if not isinstance(bg_file, str):
         errmsg = "Expected str, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(bg_file).__name__), debug)
-    if not os.path.isfile(bg_file):
+    if bg_file != UNIF and not os.path.isfile(bg_file):
         errmsg = "Unable to locate {}.\n"
         exception_handler(FileNotFoundError, errmsg.format(bg_file), debug)
     if not isinstance(pseudocount, float):
@@ -447,7 +447,7 @@ def read_MEME_motif(motif_file: str,
         errmsg = "An error occurred while reading {}.\n"
         exception_handler(MotifFileReadError, errmsg.format(motif_file), debug)
     else:
-        if bg_file == UNIF: bgs = get_uniformBG(alphabet)
+        if bg_file == UNIF: bgs = get_uniformBG(alphabet, debug)
         elif os.path.isfile(bg_file): bgs = readBGfile(bg_file, debug)
         else:
             errmsg = "Unable to parse {}.\n"

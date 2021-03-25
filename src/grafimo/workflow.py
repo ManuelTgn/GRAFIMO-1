@@ -462,7 +462,7 @@ class Findmotif(Workflow):
         self._chroms = args.chroms_find
         self._chroms_num = len(args.chroms_find)
         self._chroms_prefix = args.chroms_prefix_find
-        self._chroms_namemap = args.chroms_namemap_find
+        self._chroms_namemap = parse_namemap(args.chroms_namemap_build)
         self._bgfile = args.bgfile
         self._pseudo = args.pseudo
         self._thresh = args.threshold

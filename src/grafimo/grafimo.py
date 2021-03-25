@@ -173,10 +173,9 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
                 print("Score matrix of {}:".format(mtf))
                 m[i].print("score_matrix")  
         mtfSet.addMotif(m)
-    sys.exit(3)
     for mtf in mtfSet:
         # extract sequences
-        sequence_loc: str = scan_graph(mtf, args_obj)
+        sequence_loc: str = scan_graph(mtf, args_obj, debug)
 
         # score sequences
         res: pd.DataFrame = compute_results(mtf, sequence_loc, args_obj)

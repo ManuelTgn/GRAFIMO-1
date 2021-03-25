@@ -13,7 +13,7 @@ The results are stored in three different files:
     through GRAFIMO analysis
 """
 
-from grafimo.GRAFIMOException import VGException, SubprocessError, \
+from grafimo.GRAFIMOException import VGError, SubprocessError, \
     NoDataFrameException, FileReadError
 from grafimo.utils import PHASE, TP, SOURCE, unique_lst, list_data, die, \
     DEFAULT_OUTDIR
