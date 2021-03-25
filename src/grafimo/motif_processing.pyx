@@ -54,10 +54,10 @@ cdef creadBGFile(bg_file, debug):
     """
 
     if not isinstance(bg_file, str):
-        errmsg = "\n\nERROR: Expected str, got %s.\n" % type(bg_file).__name__
+        errmsg = "Expected str, got %s.\n" % type(bg_file).__name__
         exception_handler(TypeError, errmsg, debug)
     if not os.path.isfile(bg_file):
-        errmsg = "\n\nERROR: Unable to locate %s.\n" % bg_file
+        errmsg = "Unable to locate %s.\n" % bg_file
         exception_handler(FileNotFoundError, errmsg, debug)
 
     # ---- C vars
@@ -79,17 +79,17 @@ cdef creadBGFile(bg_file, debug):
                 prob = strtod(prob_str, endptr)
                 assert prob > 0
                 if nuc.upper() in found_nucs:
-                    errmsg = "\n\nERROR: Found two times %s.\n" % nuc
+                    errmsg = "Found two times %s.\n" % nuc
                     exception_handler(BGFileError, errmsg, debug)
                 bg_dict.update({nuc.upper(): prob})
                 found_nucs.add(nuc.upper())
             else:
-                errmsg = "\n\nERROR: Found symbol not part of the DNA alphabet: %s\n" % line[0]
+                errmsg = "Found symbol not part of the DNA alphabet: %s\n" % line[0]
                 exception_handler(ValueError, errmsg, debug)
             # all nucs read
             if len(found_nucs) == len(DNA_ALPHABET): break
     except:
-        errmsg = "\n\nERROR: An error occurred while parsing %s" % bg_file
+        errmsg = "An error occurred while parsing %s" % bg_file
         exception_handler(BGFileError, errmsg, debug)
     else:
         return bg_dict
@@ -150,10 +150,10 @@ cdef cget_uniformBG(alphabet, debug):
     """
 
     if not isinstance(alphabet, list):
-        errmsg = "\n\nERROR: Expected list, got %s.\n" % type(alphabet).__name__
+        errmsg = "Expected list, got %s.\n" % type(alphabet).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isListEqual(alphabet, DNA_ALPHABET):
-        errmsg = "\n\nERROR: The background alphabet is not the DNA alphabet.\n"
+        errmsg = "The background alphabet is not the DNA alphabet.\n"
         exception_handler(ValueError, errmsg, debug)
 
     # ---- C vars
@@ -237,40 +237,40 @@ cdef capply_pseudocount_jaspar(
     """
 
     if not isinstance(counts_matrix, np.ndarray):
-        errmsg = "\n\nERROR: Expected numpy.ndarray, got %s.\n" % type(counts_matrix).__name__
+        errmsg = "Expected numpy.ndarray, got %s.\n" % type(counts_matrix).__name__
         exception_handler(TypeError, errmsg, debug)
     if counts_matrix.size == 0 or sum(sum(counts_matrix)) == 0:
-        errmsg = "\n\nERROR: Motif counts matrix is empty.\n"
+        errmsg = "Motif counts matrix is empty.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(probs_matrix, np.ndarray):
-        errmsg = "\n\nERROR: Expected numpy.ndarray, got %s.\n" % type(probs_matrix).__name__
+        errmsg = "Expected numpy.ndarray, got %s.\n" % type(probs_matrix).__name__
         exception_handler(TypeError, errmsg, debug)
     if probs_matrix.size == 0 or sum(sum(probs_matrix)) == 0:
-        errmsg = "\n\nERROR: Motif probability matrix is empty.\n"
+        errmsg = "Motif probability matrix is empty.\n"
         exception_handler(ValueError, errmsg, probs_matrix)
     if not isinstance(alphabet, list):
-        errmsg = "\n\nERROR: Expected list, got %s.\n" % type(alphabet).__name__
+        errmsg = "Expected list, got %s.\n" % type(alphabet).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isListEqual(alphabet, DNA_ALPHABET):
-        errmsg = "\n\nERROR: The motif is not built on DNA alphabet.\n"
+        errmsg = "The motif is not built on DNA alphabet.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(bgs, dict):
-        errmsg = "\n\nERROR: Expected dict, got %s.\n" % type(bgs).__name__
+        errmsg = "Expected dict, got %s.\n" % type(bgs).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isinstance(nucsmap, dict):
-        errmsg = "\n\nERROR: Expected dict, got %s.\n" % type(nucsmap).__name__
+        errmsg = "Expected dict, got %s.\n" % type(nucsmap).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isinstance(pseudocount, float):
-        errmsg = "\n\nERROR: Expected numpy.double, got %s.\n" % type(pseudocount).__name__
+        errmsg = "Expected numpy.double, got %s.\n" % type(pseudocount).__name__
         exception_handler(TypeError, errmsg, debug)
     if pseudocount <= 0:
-        errmsg = "\n\nERROR: Pseudocount values must be > 0.\n"
+        errmsg = "Pseudocount values must be > 0.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(width, int):
-        errmsg = "\n\nERROR: Expected int, got %s.\n" % type(width).__name__
+        errmsg = "Expected int, got %s.\n" % type(width).__name__
         exception_handler(TypeError, errmsg, debug)
     if width <= 0:
-        errmsg = "\n\nERROR: Forbidden motif width.\n"
+        errmsg = "Forbidden motif width.\n"
         exception_handler(ValueError, errmsg, debug)
 
     # ---- C vars
@@ -390,40 +390,40 @@ cdef capply_pseudocount_meme(
     """
 
     if not isinstance(probs_matrix, np.ndarray):
-        errmsg = "\n\nERROR: Expected numpy.ndarray, got %s.\n" % type(probs_matrix).__name__
+        errmsg = "Expected numpy.ndarray, got %s.\n" % type(probs_matrix).__name__
         exception_handler(TypeError, errmsg, debug)
     if probs_matrix.size == 0 or sum(sum(probs_matrix)) == 0:
-        errmsg = "\n\nERROR: The probability matrix is empty.\n"
+        errmsg = "The probability matrix is empty.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(pseudocount, float):
-        errmsg = "\n\nERROR: Expected float, got %s.\n" % type(pseudocount).__name__
+        errmsg = "Expected float, got %s.\n" % type(pseudocount).__name__
         exception_handler(TypeError, errmsg, debug)
     if pseudocount <= 0:
-        errmsg = "\n\nERROR: The pseudocount must be > 0."
+        errmsg = "The pseudocount must be > 0."
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(site_counts, int):
-        errmsg = "\n\nERROR: Expected int, got %s.\n" % type(site_counts).__name__
+        errmsg = "Expected int, got %s.\n" % type(site_counts).__name__
         exception_handler(TypeError, errmsg, debug)
     if site_counts <= 0:
-        errmsg = "\n\nERROR: The site counts must be > 0.\n"
+        errmsg = "The site counts must be > 0.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(width, int):
-        errmsg = "\n\nERROR: Expected int, got %s.\n" % type(width).__name__
+        errmsg = "Expected int, got %s.\n" % type(width).__name__
         exception_handler(TypeError, errmsg, debug)
     if width <= 0:
-        errmsg = "\n\nERROR: Forbidden motif width.\n"
+        errmsg = "Forbidden motif width.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(bgs, dict):
-        errmsg = "\n\nERROR: Excpected dict, got %s.\n" % type(bgs).__name__
+        errmsg = "Excpected dict, got %s.\n" % type(bgs).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isinstance(alphabet, list):
-        errmsg = "\n\nERROR: Expected list, got %s.\n" % type(alphabet).__name__
+        errmsg = "Expected list, got %s.\n" % type(alphabet).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isListEqual(alphabet, DNA_ALPHABET):
-        errmsg = "\n\nERROR: The motif is not built on DNA alphabet.\n"
+        errmsg = "The motif is not built on DNA alphabet.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(nucsmap, dict):
-        errmsg = "\n\nERRPOR: Expected dict, got %s.\n" % type(nucsmap).__name__
+        errmsg = "Expected dict, got %s.\n" % type(nucsmap).__name__
         exception_handler(TypeError, errmsg, debug)
 
     # ---- C vars
@@ -522,28 +522,28 @@ cdef ccompute_log_odds(probs_matrix, int width, bgs, alphabet, nucsmap, debug):
     """
 
     if not isinstance(probs_matrix, np.ndarray):
-        errmsg = "\n\nERROR: Expected numpy.ndarray, got %s.\n" % type(probs_matrix).__name__
+        errmsg = "Expected numpy.ndarray, got %s.\n" % type(probs_matrix).__name__
         exception_handler(TypeError, errmsg, debug)
     if probs_matrix.size == 0 or sum(sum(probs_matrix)) == 0:
-        errmsg = "\n\nERROR: The motif probability matrix is empty.\n"
+        errmsg = "The motif probability matrix is empty.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(width, int):
-        errmsg = "\n\nERROR: Expected int, got %s.\n" % type(width).__name__
+        errmsg = "Expected int, got %s.\n" % type(width).__name__
         exception_handler(TypeError, errmsg, debug)
     if width <= 0:
-        errmsg = "\n\nERROR: Forbidden motif width.\n"
+        errmsg = "Forbidden motif width.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(bgs, dict):
-        errmsg = "\n\nERROR: Expected dict, got %s.\n" % type(bgs).__name__
+        errmsg = "Expected dict, got %s.\n" % type(bgs).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isinstance(alphabet, list):
-        errmsg = "\n\nERROR: Expected list, got %s.\n" % type(alphabet).__name__
+        errmsg = "Expected list, got %s.\n" % type(alphabet).__name__
         exception_handler(TypeError, errmsg, debug)
     if not isListEqual(alphabet, DNA_ALPHABET):
-        errmsg = "\n\nERROR: The motif is not built on DNA alphabet.\n"
+        errmsg = "The motif is not built on DNA alphabet.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(nucsmap, dict):
-        errmsg = "\n\nERROR: Expected dict, got %s.\n" % type(nucsmap).__name__
+        errmsg = "Expected dict, got %s.\n" % type(nucsmap).__name__
         exception_handler(TypeError, errmsg, debug)
 
     # ---- C vars
@@ -639,10 +639,10 @@ cdef ccomp_pval_mat(motif, debug):
     """
 
     if not isinstance(motif, Motif):
-        errmsg = "\n\nERROR: Expected Motif, got %s.\n" % type(motif).__name__
+        errmsg = "Expected Motif, got %s.\n" % type(motif).__name__
         exception_handler(TypeError, errmsg, debug)
     if not motif.getIsScaled():
-        errmsg = "\n\nERROR: The motif score matrix has not been scaled yet.\n"
+        errmsg = "The motif score matrix has not been scaled yet.\n"
         exception_handler(MotifProcessingError, errmsg, debug)
 
     # ---- C vars

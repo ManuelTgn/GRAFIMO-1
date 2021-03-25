@@ -143,17 +143,17 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
                     "Enter the path to the VCF file for haplotype tracking:\n"
                 )
                 if vcf.split(".")[-2] != "vcf" or vcf.split(".")[-1] != "gz":
-                    errmsg = "\n\nERROR: Unable to use {} for haplotype tracking. The VCF must be compressed (e.g.\"myvcf.vcf.gz\".\n"
+                    errmsg = "Unable to use {} for haplotype tracking. The VCF must be compressed (e.g.\"myvcf.vcf.gz\".\n"
                     exception_handler(ValueError, errmsg.format(vcf), debug)
                 if not os.path.isfile(vcf):
-                    errmsg = "\n\nERROR: Unable to locate {}.\n"
+                    errmsg = "Unable to locate {}.\n"
                     exception_handler(FileNotFoundError, errmsg.format(vcf), debug)
                 code: int = indexVG(args_obj.graph_genome, vcf, cores, verbose)  # VG indexing
                 if code != 0:
-                    errmsg = "\n\nERROR: An error occurred during {} indexing.\n"
+                    errmsg = "An error occurred during {} indexing.\n"
                     exception_handler(VGException, errmsg.format(args_obj.graph_genome), debug) 
             else:
-                errmsg = "\n\nERROR: To scan {} are required the XG and GBWT indexes.\n"
+                errmsg = "To scan {} are required the XG and GBWT indexes.\n"
                 exception_handler(FileNotFoundError, errmsg.format(args_obj.graph_genome), debug)
             vg_name = args_obj.graph_genome.split('.vg')[-2]
             xg = ".".join([vg_name, "xg"])
@@ -168,10 +168,10 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
         if verbose:
             print("Processing motif(s) in: {}".format(mtf))
         m = get_motif_pwm(mtf, args_obj, cores, debug)
-        #if args_obj.get_test():
-            #for i in range(len(m)):
-                #print("Score matrix of {}:".format(mtf))
-                #m[i].print("score_matrix")  
+        if args_obj.get_test():
+            for i in range(len(m)):
+                print("Score matrix of {}:".format(mtf))
+                m[i].print("score_matrix")  
         mtfSet.addMotif(m)
     sys.exit(3)
     for mtf in mtfSet:

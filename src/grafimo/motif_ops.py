@@ -77,25 +77,25 @@ def build_motif_JASPAR(
     """
 
     if not isinstance(motif_file, str):
-        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        errmsg = "Expected str, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_file).__name__), debug)
     if not os.path.isfile(motif_file):
-        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        errmsg = "Unable to locate {}.\n"
         exception_handler(FileNotFoundError, errmsg.format(motif_file), debug)
     if not isJaspar_ff(motif_file, debug):
-        errmsg = "\n\nERROR: Required JASPAR motif PWM parsing, but {} is not in JASPAR format.\n"
+        errmsg = "Required JASPAR motif PWM parsing, but {} is not in JASPAR format.\n"
         exception_handler(MotifFileFormatError, errmsg.format(motif_file), debug)
     if not isinstance(bg_file, str):
-        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        errmsg = "Expected str, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(bg_file).__name__), debug)
     if bg_file != UNIF and not os.path.isfile(bg_file):
-        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        errmsg = "Unable to locate {}.\n"
         exception_handler(FileNotFoundError, errmsg.format(bg_file), debug)
     if pseudocount <= 0:
-        errmsg = "\n\nERROR: Pseudocount value must be positive.\n"
+        errmsg = "Pseudocount value must be positive.\n"
         exception_handler(ValueError, pseudocount, debug)
     if not isinstance(no_reverse, bool):
-        errmsg = "\n\nERROR: Expected bool, got {}.\n"
+        errmsg = "Expected bool, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(no_reverse).__name__), debug)
     
     # parse motif PWM
@@ -163,7 +163,7 @@ def read_JASPAR_motif(
         # begin parsing
         header: str = str(ifstream.readline().strip()[1:])  
         if not header:  # empty file?
-            errmsg = "\n\nERROR: {} seems to empty.\n"
+            errmsg = "{} seems to empty.\n"
             exception_handler(IOError, errmsg.format(motif_file), debug) 
         motifID, motifName = header.split('\t')[0:2]  
         readlines += 1
@@ -176,14 +176,14 @@ def read_JASPAR_motif(
             counts.append(count)
             readlines += 1
         if readlines <= 1:  # only header read ?
-            errmsg = "\n\nERROR: {} seems to be empty.\n"
+            errmsg = "{} seems to be empty.\n"
             exception_handler(IOError, errmsg.format(motif_file), debug)
     except:
-        errmsg = "\n\nERROR: An error occurred while reading {}.\n"
+        errmsg = "An error occurred while reading {}.\n"
         exception_handler(MotifFileReadError, errmsg.format(motif_file), debug)
     else:
         if any([len(c) != len(counts[0]) for c in counts]):
-            errmsg = "\n\nERROR: Motif counts width mismatch.\n"
+            errmsg = "Motif counts width mismatch.\n"
             exception_handler(ValueError, errmsg, debug)
         nucsmap = dict()  # used with np object
         for i in range(len(nucs)): nucsmap.update({nucs[i]:i})
@@ -195,7 +195,7 @@ def read_JASPAR_motif(
         if bg_file == UNIF: bgs = get_uniformBG(alphabet, debug)
         elif os.path.isfile(bg_file): bgs = readBGfile(bg_file, debug)
         else:
-            errmsg = "\n\nERROR: Unable to parse {}.\n"
+            errmsg = "Unable to parse {}.\n"
             exception_handler(BGFileError, errmsg.format(bg_file), debug)
         bgs = pseudo_bg(bgs, no_reverse, debug)  # add pseudocount to bg
         
@@ -266,13 +266,13 @@ def build_motif_MEME(
     """
 
     if not isinstance(motif_file, str):
-        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        errmsg = "Expected str, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_file).__name__), debug)
     if not os.path.isfile(motif_file):
-        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        errmsg = "Unable to locate {}.\n"
         exception_handler(FileNotFoundError, errmsg.format(motif_file), debug)
     if not isMEME_ff(motif_file, debug):
-        errmsg = "\n\nERROR: Required MEME motif PWM parsing, but {} is not in MEME format.\n"
+        errmsg = "Required MEME motif PWM parsing, but {} is not in MEME format.\n"
         exception_handler(MotifFileFormatError, errmsg.format(motif_file), debug)
 
     if verbose: start_rm_all: float = time.time()
@@ -383,25 +383,25 @@ def read_MEME_motif(motif_file: str,
     """
 
     if not isinstance(motif_file, str):
-        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        errmsg = "Expected str, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_file).__name__), debug)
     if not os.path.isfile(motif_file):
-        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        errmsg = "Unable to locate {}.\n"
         exception_handler(FileNotFoundError, errmsg.format(motif_file), debug)
     if not isinstance(bg_file, str):
-        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        errmsg = "Expected str, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(bg_file).__name__), debug)
     if not os.path.isfile(bg_file):
-        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        errmsg = "Unable to locate {}.\n"
         exception_handler(FileNotFoundError, errmsg.format(bg_file), debug)
     if not isinstance(pseudocount, float):
-        errmsg = "\n\nERROR: Expected float, got {}.\n"
+        errmsg = "Expected float, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(pseudocount).__name__), debug)
     if pseudocount <= 0:
-        errmsg = "\n\nERROR: The pseudocount must be > 0.\n"
+        errmsg = "The pseudocount must be > 0.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(no_reverse, bool):
-        errmsg = "\n\nERROR: Expected bool, got {}.\n"
+        errmsg = "Expected bool, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(no_reverse).__name__), debug)
 
     motifs_raw = list()
@@ -441,16 +441,16 @@ def read_MEME_motif(motif_file: str,
                 end_rm = time.time()
                 print("Read motif %s in %.2fs." % (motif_name, (end_rm - start_rm)))
         if not proceed:
-            errmsg = "\n\nERROR: Unexpected premature EOF in {}.\n"
+            errmsg = "Unexpected premature EOF in {}.\n"
             exception_handler(EOFError, errmsg.format(motif_file), debug)
     except:
-        errmsg = "\n\nERROR: An error occurred while reading {}.\n"
+        errmsg = "An error occurred while reading {}.\n"
         exception_handler(MotifFileReadError, errmsg.format(motif_file), debug)
     else:
         if bg_file == UNIF: bgs = get_uniformBG(alphabet)
         elif os.path.isfile(bg_file): bgs = readBGfile(bg_file, debug)
         else:
-            errmsg = "\n\nERROR: Unable to parse {}.\n"
+            errmsg = "Unable to parse {}.\n"
             exception_handler(BGFileError, errmsg.format(bg_file), debug)
         bgs = pseudo_bg(bgs, no_reverse, debug)  # add pseudocount to bg
         for i in range(motifs_num):
@@ -498,15 +498,15 @@ def __read_alphabet_meme(motif_file: str, ifstream, debug: bool) -> List[str]:
     for line in ifstream:
         if line.startswith("ALPHABET"): break
     else:
-        errmsg = "\n\nERROR: Unexpected EOF reached, unable to parse {}.\n"
+        errmsg = "Unexpected EOF reached, unable to parse {}.\n"
         exception_handler(EOFError, errmsg.format(motif_file), debug)
     if not line.startswith("ALPHABET"):
-        errmsg = "\n\nERROR: No line stores alphabet in {}.\n"
+        errmsg = "No line stores alphabet in {}.\n"
         exception_handler(ValueError, errmsg.format(motif_file), debug)
     line = line.strip().replace("ALPHABET= ", "")
     if line == "ACGT": alphabet = sorted(list(line))
     else:
-        errmsg = "\n\nERROR: The motif is not built on DNA alphabet.\n"
+        errmsg = "The motif is not built on DNA alphabet.\n"
         exception_handler(ValueError, errmsg, debug)
     assert isListEqual(alphabet, DNA_ALPHABET)
     return alphabet
@@ -577,7 +577,7 @@ def __read_counts_meme(
         freqs = line.split()
         if len(freqs) != 4:
             if pos < width:
-                errmsg = "\n\nERROR: Unexpected end of motif found.\n"
+                errmsg = "Unexpected end of motif found.\n"
                 exception_handler(EOFError, errmsg, debug)
             break  # motif stop
         a.append(np.double(freqs[0]))
@@ -587,7 +587,7 @@ def __read_counts_meme(
         pos += 1
     probs = [a, c, g, t]
     if any([len(p) != len(probs[0]) for p in probs]):
-        errmsg = "\n\nERROR: Mismatch in letter probabilities vectors lengths.\n"
+        errmsg = "Mismatch in letter probabilities vectors lengths.\n"
         exception_handler(ValueError, errmsg, debug)
     return probs
 
@@ -614,7 +614,7 @@ def process_motif_for_logodds(motif: Motif, debug: bool) -> Motif:
     """
 
     if not isinstance(motif, Motif):
-        errmsg = "\n\nERROR: Expected Motif, got {}.\n"
+        errmsg = "Expected Motif, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif).__name__), debug)
 
     # compute log-odds
@@ -687,25 +687,25 @@ def scale_pwm(
     """
 
     if not isinstance(motif_matrix, np.ndarray):
-        errmsg = "\n\nERROR: Expected numpy.ndarray, got {}.\n"
+        errmsg = "Expected numpy.ndarray, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_matrix).__name__), debug)
     if motif_matrix.size == 0 or sum(sum(motif_matrix)) == 0:
-        errmsg = "\n\nERROR: The motif log-odds natrix is empty.\n"
+        errmsg = "The motif log-odds natrix is empty.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(alphabet, list):
-        errmsg = "\n\nERROR: Expected list, got {}.\n"
+        errmsg = "Expected list, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(alphabet).__name__), debug)
     if not isListEqual(alphabet, DNA_ALPHABET):
-        errmsg = "\n\nERROR: The motif is not built on DNA alphabet.\n"
+        errmsg = "The motif is not built on DNA alphabet.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(motif_width, int):
-        errmsg = "\n\nERROR: Expected int, got {}.\n"
+        errmsg = "Expected int, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_width).__name__), debug)
     if motif_width <= 0:
-        errmsg = "\n\nERROR: Forbidden motif width.\n"
+        errmsg = "Forbidden motif width.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(nucsmap, dict):
-        errmsg = "\n\nERROR: Expected dict, got {}.\n"
+        errmsg = "Expected dict, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(nucsmap).__name__), debug)
 
     min_val = motif_matrix.min()
@@ -776,13 +776,13 @@ def get_motif_pwm(motif_file: str,
     verbose: bool = args_obj.verbose
     errmsg: str
     if not isinstance(motif_file, str):
-        errmsg = "\n\nERROR: Expected str, got {}.\n"
+        errmsg = "Expected str, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_file).__name__), debug)
     if not os.path.isfile(motif_file):
-        errmsg = "\n\nERROR: Unable to locate {}.\n"
+        errmsg = "Unable to locate {}.\n"
         exception_handler(FileNotFoundError, errmsg.format(motif_file), debug)
     if (not isMEME_ff(motif_file, debug)) and (not isJaspar_ff(motif_file, debug)):
-        errmsg = "\n\nERROR: Motif PWM must be in MEME or JASPAR format.\n"
+        errmsg = "Motif PWM must be in MEME or JASPAR format.\n"
         exception_handler(MotifFileFormatError, errmsg, debug)
 
     # chhose motif PWM parsing method
@@ -795,7 +795,7 @@ def get_motif_pwm(motif_file: str,
             motif_file, bgs, pseudo, no_reverse, cores, verbose, debug
         )
     else:
-        errmsg = "\n\nERROR: Motif PWM must be in MEME or JASPAR format.\n"
+        errmsg = "Motif PWM must be in MEME or JASPAR format.\n"
         exception_handler(MotifFileFormatError, errmsg, debug)
 
     # list instance required to proceed    
@@ -839,10 +839,10 @@ def pseudo_bg(bgs: Dict,
     """
 
     if not isinstance(bgs, dict):
-        errmsg = "\n\nERROR: Expected dict, got {}.\n"
+        errmsg = "Expected dict, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(bgs).__name__), debug)
     if not isinstance(no_reverse, bool):
-        errmsg = "\n\nERROR: Expectec bool, got {}.\n"
+        errmsg = "Expected bool, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(no_reverse).__name__), debug)
     
     if not no_reverse:  # fwd + rev strand
@@ -874,7 +874,7 @@ def average_bg_with_rc(bgs: Dict, debug: bool):
     """
 
     if not isinstance(bgs, dict):
-        errmsg = "\n\nERROR: Expected dict, got {}.\n"
+        errmsg = "Expected dict, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(bgs).__name__), debug)
     
     bgs_avg: Dict = dict()
@@ -906,7 +906,7 @@ def norm_bg(bgs: Dict, debug: bool):
     """
     
     if not isinstance(bgs, dict):
-        errmsg = "\n\nERROR: Expected dict, got {}.\n"
+        errmsg = "Expected dict, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(bgs).__name__), debug)
 
     alphabet: List[str] = sorted(list(bgs.keys()))
@@ -953,19 +953,19 @@ def norm_motif(motif_probs: pd.DataFrame,
     """
 
     if not isinstance(motif_probs, pd.DataFrame):
-        errmsg = "\n\nERROR: Expected pandas.DataFrame, got {}.\n"
+        errmsg = "Expected pandas.DataFrame, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_probs).__name__), debug)
     if not isinstance(motif_width, int):
-        errmsg = "\n\nERROR: Expected int, got {}.\n"
+        errmsg = "Expected int, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(motif_width).__name__), debug)
     if motif_width <= 0:
-        errmsg = "\n\nERROR: Forbidden motif width.\n"
+        errmsg = "Forbidden motif width.\n"
         exception_handler(ValueError, errmsg, debug)
     if not isinstance(alphabet, list):
-        errmsg = "\n\nERROR: Expected list, got {}.\n"
+        errmsg = "Expected list, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(alphabet).__name__), debug)
     if any([nuc not in DNA_ALPHABET for nuc in alphabet]):
-        errmsg = "\n\nERROR: The motif is not built on DNA alphabet.\n"
+        errmsg = "The motif is not built on DNA alphabet.\n"
         exception_handler(ValueError, errmsg, debug)
 
     # tolerance in the difference between the position probability and 1

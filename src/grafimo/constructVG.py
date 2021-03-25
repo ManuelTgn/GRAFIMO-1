@@ -118,7 +118,7 @@ def get_1000GProject_vcf(debug) -> str:
     cmd = 'wget -c {0}'.format(address)
     code = subprocess.call(cmd, shell=True)
     if code != 0:
-        errmsg = "\n\nERROR: An error occurred while executing \"{}\". Exiting.\n"
+        errmsg = "An error occurred while executing \"{}\". Exiting.\n"
         exception_handler(SubprocessError, errmsg.format(cmd), debug)
     # vcf should be in the current dir
     vcf_file: str = './ALL.wgs.shapeit2_integrated_snvindels_v2a.GRCh38.27022019.sites.vcf.gz'
