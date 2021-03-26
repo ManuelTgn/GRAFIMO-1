@@ -106,111 +106,112 @@ def scan_graph(
     verbose = args_obj.verbose
 
     # sequence extraction begin
-    print("\nExtracting regions defined in {}.\n".format(bedfile))
-    if verbose: start_bp = time.time()
-    regions, region_num = get_regions_bed(bedfile, debug)
-    if verbose: 
-        end_bp = time.time()
-        print("%s parsed in %.2fs. Found %d regions.\n" % (bedfile, (end_bp - start_bp), region_num))
-    if args_obj.chroms_num == 1 and chroms[0] == ALL_CHROMS:
-        chroms = [c.split("chr")[1] for c in regions.keys()]
-    tmpwd: str = tempfile.mkdtemp(prefix='grafimo_')  # create a tmp dir
-    cwd: str = os.getcwd()  # get the current location 
-    os.chdir(tmpwd)  # enter the tmp dir 
-    # create a list of queries
-    queries: List[str] = list()  
-    # overwrite the default SIGINT handler to exit gracefully
-    # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
-    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    pool: mp.Pool = mp.Pool(processes=cores)  # use no. cores processes
-    signal.signal(signal.SIGINT, original_sigint_handler) 
-    if args_obj.has_graphgenome_dir(): 
-        for chrom in chroms:
-            if not bool(namemap):
-                chrname = "".join([chroms_prefix, chrom])
-            else:
-                try:
-                    chrname = namemap[chrom]
-                except:
-                    errmsg = "Missing out name map for chromosome {}.\n"
-                    exception_handler(KeyError, errmsg.format(chrom), debug)
-            if chrom.startswith("chr"): positions = regions[chrom]
-            else: positions = regions["".join(["chr", chrom])]
-            for pos in positions:
-                start: int = pos[0]
-                stop: int = pos[1]
-                if chroms_prefix: c = chrname.split(chroms_prefix)[1]
-                else: c = chrname
-                region_index:str = "-".join(
-                    [":".join([c, str(start)]), str(stop)]
-                )
-                region_name: str = "-".join(
-                    ["_".join([chrname, str(start)]), str(stop)]
-                )
-                seqs: str = os.path.join(".", ".".join([region_name, "tsv"]))
-                xg: str = os.path.join(vg, ".".join([chrname, "xg"]))
-                # the GBWT must have the same prefix as XG
-                gbwt: str = os.path.join(vg, ".".join([chrname, "gbwt"]))  
-                if not os.path.isfile(xg):
-                    errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
-                    exception_handler(VGError, errmsg.format(xg), debug)
-                if not os.path.isfile(gbwt):
-                    errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
-                    exception_handler(VGError, errmsg.format(gbwt), debug)
-                query: str = "vg find -p {} -x {} -H {} -K {} -E > {}".format(
-                    region_index, xg, gbwt, motif_width, seqs
-                )
-                queries.append(query)
-        for q in queries: print(q)
-        sys.exit(3)
-        get_kmers(queries, pool, debug, verbose)
+    try:
+        print("\nExtracting regions defined in {}.\n".format(bedfile))
+        if verbose: start_bp = time.time()
+        regions, region_num = get_regions_bed(bedfile, debug)
+        if verbose: 
+            end_bp = time.time()
+            print("%s parsed in %.2fs. Found %d regions.\n" % (bedfile, (end_bp - start_bp), region_num))
+        if args_obj.chroms_num == 1 and chroms[0] == ALL_CHROMS:
+            chroms = [c.split("chr")[1] for c in regions.keys()]
+        tmpwd: str = tempfile.mkdtemp(prefix='grafimo_')  # create a tmp dir
+        cwd: str = os.getcwd()  # get the current location 
+        os.chdir(tmpwd)  # enter the tmp dir 
+        # create a list of queries
+        queries: List[str] = list()  
+        # overwrite the default SIGINT handler to exit gracefully
+        # https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
+        original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+        pool: mp.Pool = mp.Pool(processes=cores)  # use no. cores processes
+        signal.signal(signal.SIGINT, original_sigint_handler) 
+        if args_obj.has_graphgenome_dir(): 
+            for chrom in chroms:
+                if not bool(namemap):
+                    chrname = "".join([chroms_prefix, chrom])
+                else:
+                    try:
+                        chrname = namemap[chrom]
+                    except:
+                        errmsg = "Missing out name map for chromosome {}.\n"
+                        exception_handler(KeyError, errmsg.format(chrom), debug)
+                if chrom.startswith("chr"): positions = regions[chrom]
+                else: positions = regions["".join(["chr", chrom])]
+                for pos in positions:
+                    start: int = pos[0]
+                    stop: int = pos[1]
+                    if chroms_prefix: c = chrname.split(chroms_prefix)[1]
+                    else: c = chrname
+                    region_index:str = "-".join(
+                        [":".join([c, str(start)]), str(stop)]
+                    )
+                    region_name: str = "-".join(
+                        ["_".join([chrname, str(start)]), str(stop)]
+                    )
+                    seqs: str = os.path.join(".", ".".join([region_name, "tsv"]))
+                    xg: str = os.path.join(vg, ".".join([chrname, "xg"]))
+                    # the GBWT must have the same prefix as XG
+                    gbwt: str = os.path.join(vg, ".".join([chrname, "gbwt"]))  
+                    if not os.path.isfile(xg):
+                        errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
+                        exception_handler(VGError, errmsg.format(xg), debug)
+                    if not os.path.isfile(gbwt):
+                        errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
+                        exception_handler(VGError, errmsg.format(gbwt), debug)
+                    query: str = "vg find -p {} -x {} -H {} -K {} -E > {}".format(
+                        region_index, xg, gbwt, motif_width, seqs
+                    )
+                    queries.append(query)
+            get_kmers(queries, pool, debug, verbose)
 
-    elif args_obj.has_graphgenome():
-
-        for chrom in chroms:
-            if not bool(namemap):
-                chrname = "".join([chroms_prefix, chrom])
-            else:
-                try:
-                    chrname = namemap[chrom]
-                except:
-                    errmsg = "Missing out name map for chromosome {}.\n"
-                    exception_handler(KeyError, errmsg.format(chrom), debug)
-            if chrom.startswith("chr"): positions = regions[chrom]
-            else: positions = regions["".join(["chr", chrom])]
-            for pos in positions:
-                start: int = pos[0]
-                stop: int = pos[1]
-                if chroms_prefix: c = chrname.split(chroms_prefix)[1]
-                else: c = chrname
-                region_index:str = "-".join(
-                    [":".join([c, str(start)]), str(stop)]
-                )
-                region_name: str = "-".join(
-                    ["_".join([chrname, str(start)]), str(stop)]
-                )
-                seqs: str = os.path.join(".", ".".join([region_name, "tsv"]))
-                xg: str = vg
-                xg_prefix: str = xg.split(".xg")[0]
-                # the GBWT must have the same prefix as XG
-                gbwt: str = ".".join([xg_prefix, "gbwt"]) 
-                if not os.path.exists(xg):
-                    errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
-                    exception_handler(VGError, errmsg.format(xg), debug)
-                if not os.path.isfile(gbwt):
-                    errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
-                    exception_handler(VGError, errmsg.format(gbwt), debug)
-                query: str = "vg find -p {} -x {} -H {} -K {} -E > {}".format(
-                    region_index, xg, gbwt, motif_width, seqs
-                )
-                queries.append(query)
-
-        for q in queries: print(q)
-        sys.exit(3)
-        get_kmers(queries, pool, verbose)
-    else:
-        errmsg = "Unable to scan the genome variation graph(s).\n"
-        exception_handler(VGError, errmsg, debug)
+        elif args_obj.has_graphgenome():
+            for chrom in chroms:
+                if not bool(namemap):
+                    chrname = "".join([chroms_prefix, chrom])
+                else:
+                    try:
+                        chrname = namemap[chrom]
+                    except:
+                        errmsg = "Missing out name map for chromosome {}.\n"
+                        exception_handler(KeyError, errmsg.format(chrom), debug)
+                if chrom.startswith("chr"): positions = regions[chrom]
+                else: positions = regions["".join(["chr", chrom])]
+                for pos in positions:
+                    start: int = pos[0]
+                    stop: int = pos[1]
+                    if chroms_prefix: c = chrname.split(chroms_prefix)[1]
+                    else: c = chrname
+                    region_index:str = "-".join(
+                        [":".join([c, str(start)]), str(stop)]
+                    )
+                    region_name: str = "-".join(
+                        ["_".join([chrname, str(start)]), str(stop)]
+                    )
+                    seqs: str = os.path.join(".", ".".join([region_name, "tsv"]))
+                    xg: str = vg
+                    xg_prefix: str = xg.split(".xg")[0]
+                    # the GBWT must have the same prefix as XG
+                    gbwt: str = ".".join([xg_prefix, "gbwt"]) 
+                    if not os.path.exists(xg):
+                        errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
+                        exception_handler(VGError, errmsg.format(xg), debug)
+                    if not os.path.isfile(gbwt):
+                        errmsg = "Unable to locate {}. Are your VGs named with \"chr\"? Consider using --chroms-prefix-find or chroms-namemap-find.\n"
+                        exception_handler(VGError, errmsg.format(gbwt), debug)
+                    query: str = "vg find -p {} -x {} -H {} -K {} -E > {}".format(
+                        region_index, xg, gbwt, motif_width, seqs
+                    )
+                    queries.append(query)
+            get_kmers(queries, pool, verbose)
+    except:
+        errmsg = "An error occurred while scanning {}.\n"
+        if args_obj.has_graphgenome_dir(): 
+            exception_handler(VGError, errmsg.format(xg), debug)
+        elif args_obj.has_graphgenome(): 
+            exception_handler(VGError, errmsg.format(vg), debug)
+        else:
+            errmsg = "Chromosome name mismatch. Check chromosome name consistency.\n"
+            exception_handler(VGError, errmsg, debug)
     sequence_loc: str = os.getcwd()  
     os.chdir(cwd) 
 
@@ -222,7 +223,7 @@ def scan_graph(
 def get_kmers(
     queries: List[str], 
     pool: mp.Pool, 
-    debug: bool 
+    debug: bool,
     verbose: Optional[bool] = False,
 ) -> None:
     """Retrieve sequences from genome variation graph(s). The k-mers search is
@@ -245,9 +246,6 @@ def get_kmers(
     if not isinstance(queries, list):
         errmsg = "Expected list, got {}.\n"
         exception_handler(TypeError, errmsg.format(type(queries).__name__), debug)
-    if not isinstance(pool, mp.Pool):
-        errmsg = "Expected multiprocessing.Pool, got {}.\n"
-        exception_handler(TypeError, errmsg.format(type(pool).__name__), debug)
 
     if verbose: start_re: float = time.time()
     try:

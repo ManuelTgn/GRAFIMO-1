@@ -28,6 +28,12 @@ class FileReadError(GRAFIMOException):
     pass
 
 
+class FileWriteError(GRAFIMOException):
+    """Raise when errors occurred during generic file writing.
+    """
+    pass
+
+
 class FileFormatError(GRAFIMOException):
     """Raise when errors occurred during generic file format checks.
     """

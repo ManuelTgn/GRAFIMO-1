@@ -600,7 +600,7 @@ class Findmotif(Workflow):
 
     @property
     def outdir(self):
-        self._get_outdir()
+        return self._get_outdir()
 
 
     def _get_cores(self) -> int:

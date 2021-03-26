@@ -360,20 +360,41 @@ class Motif(object):
         return self._get_motifScoreMatrix()
 
 
-    def getMotif_pval_mat(self) -> np.array:
-        return self._pval_matrix
+    def _get_motifPvalMat(self) -> np.ndarray:
+        if self._pval_matrix.size == 0 or sum(self._pval_matrix) == 0:
+            errmsg = "\n\nERROR: \"self._pval_matrix\" is empty.\n"
+            raise AttributeError(errmsg)
+        else:
+            return self._pval_matrix
+    
+    @property
+    def pvalMatrix(self):
+        return self._get_motifPvalMat()
 
 
-    def getMin_val(self) -> int:
+    def _get_minVal(self) -> int:
         return self._min_val
 
+    @property
+    def minval(self):
+        return self._get_minVal()
 
-    def getMax_val(self) -> int:
+
+    def _get_maxVal(self) -> int:
         return self._max_val
 
+    @property
+    def maxval(self):
+        return self._get_maxVal()
 
-    def getScale(self) -> int:
+
+    def _get_scale(self) -> int:
         return self._scale
+
+    @property
+    def scale(self):
+        return self._get_scale()
+
 
     def _get_nucsmap(self):
         if not bool(self._nucsmap):
@@ -387,8 +408,12 @@ class Motif(object):
         return self._get_nucsmap()
 
 
-    def getOffset(self) -> np.double:
+    def _get_offset(self) -> np.double:
         return self._offset
+
+    @property
+    def offset(self):
+        return self._get_offset()
 
 
     def _get_bg(self) -> dict:
@@ -423,8 +448,16 @@ class Motif(object):
         return self._get_motifID()
 
 
-    def getMotifName(self) -> str:
-        return self._motif_name
+    def _get_motifName(self) -> str:
+        if not self._motif_name:
+            errmsg = "\n\nERROR: \"self._motif_name\" is empty.\n"
+            raise AttributeError(errmsg)
+        else:
+            return self._motif_name
+
+    @property
+    def motifName(self):
+        return self._get_motifName()
 
 
     def _get_alphabet(self) -> List[str]:
@@ -439,13 +472,16 @@ class Motif(object):
         return self._get_alphabet()
 
 
-    def getIsScaled(self) -> bool:
+    def _get_isScaled(self) -> bool:
         return self._isScaled
+
+    @property
+    def isScaled(self):
+        return self._get_isScaled()
 
 
     def compute_minValue(self) -> None:
-        motif_matrix = self.getMotif_matrix()
-        min_value = motif_matrix.min().sum()
+        min_value = self._score_matrix.min()
         self._min_val = min_value
 
 

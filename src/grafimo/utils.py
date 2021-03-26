@@ -37,6 +37,8 @@ PHASE = '.'
 def die(code: int) -> None:
     """Stop the execution and exit.
 
+    ...
+
     Parameters
     ----------
     code : int
@@ -316,12 +318,15 @@ def isbed(bedfile: str, debug: bool) -> bool:
     return False
 
 
-def almost_equal(value1: np.double,
-                 value2: np.double,
-                 slope: np.double
+def almost_equal(
+    value1: np.double,
+    value2: np.double,
+    slope: np.double
 ) -> bool:
     """Check if two values are close to each other, given a degree
     of tolerance (slope).
+
+    ...
     
     Parameters
     ----------
@@ -363,155 +368,109 @@ def lg2(value: np.double) -> np.double:
 # end of lg2()
 
 
-def unique_lst(lst: List, size: Optional[int] = None) -> List:
-    """Get the unique values contained in a list and store them in 
-    another one.
+def dftolist(data: pd.DataFrame, no_qvalue: bool, debug: bool) -> List:
+    """Convert pandas DataFrame in a list of lists.
 
-    Parameters
-    ----------
-    lst : list
-        list of values
-    size : int, optional
-        number of unique values that the list has to contain
-
-    Returns
-    -------
-    list
-        list of the unique values
-    """
-
-    assert (len(lst) > 0)
-
-    unique_lst: List = list() 
-    el_num: int = 0
-
-    for el in lst:
-
-        if el not in unique_lst:
-            unique_lst.append(el)
-            el_num += 1
-
-        if size != None and el_num == size:  # size limit reached
-            break
-
-    assert (len(unique_lst) > 0)
-
-    return unique_lst
-
-# end of unique_lst()
-
-
-def list_data(data: pd.DataFrame, qvalue: bool) -> List:
-    """Convert a pandas DataFrame in a list containign each dataframe 
-    column as a list of values
+    ...
 
     Parameters
     ----------
     data : pandas.DataFrame
-        input DataFrame
-    qvalue : bool
-        if True the column of q-values has to be considered
+        DataFrame
+    no_qvalue : bool
+        skip q-values
+    debug : bool
+        trace the full error stack
 
     Returns
     -------
     list
-        list containing DataFrame's columns as list of values
+        DataFrame values as list of lists
     """
 
-
     if not isinstance(data, pd.DataFrame):
-        errmsg: str = "\n\nERROR: not allowed data type given"
-        raise NoDataFrameException(errmsg)
+        errmsg = "Expected pandas.DataFrame, got {}.\n"
+        exception_handler(TypeError, errmsg.format(type(data).__name__), debug)
+    if len(data) == 0:
+        errmsg = "Empty DataFrames cannot be converted to lists of values.\n"
+        exception_handler(ValueError, errmsg, debug)
+    if len(data.columns) > 12 or len(data.columns) < 11:
+        errmsg = "Not enough values to extract from the DataFrame.\n"
+        exception_handler(ValueError, errmsg, debug)
+    if not isinstance(no_qvalue, bool):
+        errmsg = "Expected bool, got {}.\n"
+        exception_handler(TypeError, errmsg.format(type(no_qvalue).__name__), debug)
 
-    assert len(data.columns) <= 12
-    assert len(data.columns) >= 11
-
-    seqnames: List[str] = data['sequence_name'].to_list()
-    starts: List[int] = data['start'].to_list()
-    stops: List[int] = data['stop'].to_list()
-    scores: List[np.double] = data['score'].to_list()
-    strands: List[str] = data['strand'].to_list()
-    motifIDs: List[str] = data['motif_id'].to_list()
-    motifNames: List[str] = data['motif_alt_id'].to_list()
-    pvalues: List[np.double] = data['p-value'].to_list()
-    sequences: List[str] = data['matched_sequence'].to_list()
-    frequencies:List[int] = data['haplotype_frequency'].to_list()
-    references: List[str] = data['reference'].to_list()
-
-    if qvalue:
-        qvalues: List[np.double] = data['q-value'].to_list()
-
-    if qvalue:
-        summary = [motifIDs, motifNames, seqnames, starts, stops, strands, scores,
-                   pvalues, sequences, frequencies, references, qvalues]
-    else:
-        summary = [motifIDs, motifNames, seqnames, starts, stops, strands, scores,
-                   pvalues, sequences, frequencies, references]
-
-    summary_len: int = len(motifIDs)
-
-    assert summary_len == len(data.index)
-    assert summary_len == len(motifNames)
-    assert summary_len == len(seqnames)
-    assert summary_len == len(starts)
-    assert summary_len == len(stops)
-    assert summary_len == len(strands)
-    assert summary_len == len(scores)
-    assert summary_len == len(pvalues)
-    assert summary_len == len(sequences)
-    assert summary_len == len(frequencies)
-    assert summary_len == len(references)
-
-    if qvalue:
-        assert summary_len == len(qvalues)
+    seqnames: List[str] = data["sequence_name"].tolist()
+    starts: List[int] = data["start"].tolist()
+    stops: List[int] = data["stop"].tolist()
+    scores: List[np.double] = data["score"].tolist()
+    strands: List[str] = data["strand"].tolist()
+    motifIDs: List[str] = data["motif_id"].tolist()
+    motifNames: List[str] = data["motif_alt_id"].tolist()
+    pvalues: List[np.double] = data["p-value"].tolist()
+    sequences: List[str] = data["matched_sequence"].tolist()
+    frequencies:List[int] = data["haplotype_frequency"].tolist()
+    references: List[str] = data["reference"].tolist()
+    if not no_qvalue:
+        qvalues: List[np.double] = data["q-value"].tolist()
+        summary = [
+            motifIDs, motifNames, seqnames, starts, stops, strands, scores,
+            pvalues, sequences, frequencies, references, qvalues
+        ]
+    else:  # no_qvalue == True
+        summary = [
+            motifIDs, motifNames, seqnames, starts, stops, strands, scores,
+            pvalues, sequences, frequencies, references
+        ]
+    if any([len(seqnames) != len(l) for l in summary]):
+        errmsg = "List length mismatch.\n"
+        exception_handler(ValueError, errmsg, debug)
 
     return summary
 
-# end of list_data()
+# end of dftolist()
 
 
-def printProgressBar(iteration: int,
-                     total: int,
-                     prefix: Optional[str] = '',
-                     suffix: Optional[str] = '',
-                     decimals: Optional[int] = 1,
-                     length: Optional[int] = 50,
-                     fill: Optional[str] = '=',
-                     printEnd: Optional[str] ="\r"
+def printProgressBar(
+    iteration: int,
+    total: int,
+    prefix: Optional[str] = '',
+    suffix: Optional[str] = '',
+    decimals: Optional[int] = 1,
+    length: Optional[int] = 50,
+    fill: Optional[str] = '=',
+    printEnd: Optional[str] ="\r"
 ) -> None:
-    """Print a progress bar.
+    """Print progress bar.
 
-    The progress bar is printed while processing MEME files conatining 
-    many motifs, while building VGs, while extracting motif candidate 
-    and while scoring the motif candidates.
+    ...
 
     Parameters
     ----------
     iteration : int
         iteration number
     total : int
-        total number of iterations to do
+        total number of iterations 
     prefix : str
-        string to print in front of the bar
+        progress bar prefix
     suffix : str
-        string t print at the end of the bar
+        progress bar suffix
     decimals : int
-        number of decmal digits to display
+        number of decimal digits to display
     length : int
-        length of the bar (# characters to use)
+        bar length
     fill : str
-        string to fill the bar
+        bar filling character
     printEnd : str
-        string to print at end of the whole bar 'structure'
+        bar ending character 
     """
 
-    percent: str = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    pct: str = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filledLength: int = int(length * iteration // total)
-    # "allocate space" for the bar
+    # allocate space for the bar
     bar: float = fill * filledLength + ' ' * (length - filledLength)  
-
-    print('\r%s [%s] %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
-
+    print('\r%s [%s] %s%% %s' % (prefix, bar, pct, suffix), end = printEnd)
     # new line when the bar is completely filled
     if iteration == total:
         print()

@@ -641,7 +641,7 @@ cdef ccomp_pval_mat(motif, debug):
     if not isinstance(motif, Motif):
         errmsg = "Expected Motif, got %s.\n" % type(motif).__name__
         exception_handler(TypeError, errmsg, debug)
-    if not motif.getIsScaled():
+    if not motif.isScaled:
         errmsg = "The motif score matrix has not been scaled yet.\n"
         exception_handler(MotifProcessingError, errmsg, debug)
 

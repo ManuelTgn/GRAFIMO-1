@@ -176,23 +176,17 @@ def findmotif(args_obj: Findmotif, debug: bool) -> None:
     for mtf in mtfSet:
         # extract sequences
         sequence_loc: str = scan_graph(mtf, args_obj, debug)
-
         # score sequences
-        res: pd.DataFrame = compute_results(mtf, sequence_loc, args_obj)
-
+        res: pd.DataFrame = compute_results(mtf, sequence_loc, debug, args_obj)
         # write results
-        if args_obj.get_text_only():
-            print_results(res)
-        else:
-            write_results(res, mtf.getMotifID(), mtfSet.size, args_obj)
+        if args_obj.text_only: print_results(res)  # print to stdout
+        else: write_results(res, mtf, mtfSet.size, args_obj, debug)
 
 # end of findmotif()
 
 
 def printWelcomeMsg() -> None:
-    """Prints the welcome message for GRAFIMO
-  
-    """
+    """Print GRAFIMO welcome message"""
     for _ in range(75): print('*', end='')
     msg = "\n\tWelcome to GRAFIMO v{}"
     print()  # newline

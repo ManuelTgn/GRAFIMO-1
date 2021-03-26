@@ -137,7 +137,7 @@ def get_parser() -> GRAFIMOArgumentParser:
     group.add_argument("--debug", action="store_true", default=False, dest="debug",
                        help="Enable error traceback.")
     group.add_argument("-o", "--out", type=str, help="Output directory."
-                       " [optional]", nargs='?', const='grafimo_out', default='', 
+                       " [optional]", nargs='?', const='grafimo_out', default="", 
                        metavar='OUTDIR')
     group.add_argument("workflow", type=str, default='',
                        help="Mandatory argument placed immediately after \"grafimo\". "
@@ -621,6 +621,7 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                 # out directory
                 if args.out == "":  # default option
                     args.out = DEFAULT_OUTDIR 
+                    print(args.out)
 
                 # threshold on q-value flag
                 if (not isinstance(args.qval_t, bool) or
