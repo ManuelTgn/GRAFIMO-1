@@ -200,7 +200,6 @@ def writeGFF3(prefix: str, data: pd.DataFrame, no_qvalue: bool, debug: bool) -> 
         exception_handler(TypeError, errmsg.format(type(no_qvalue).__name__), debug)
 
     data_list = dftolist(data, no_qvalue, debug)
-    print(data)
     try:
         gfffn = ".".join([prefix, "gff"])
         ofstream = open(gfffn, mode='w+')

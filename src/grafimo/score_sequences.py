@@ -170,6 +170,9 @@ def compute_results(
         )
         seqs_scanned += scanned_seqs_dict[key]
         nucs_scanned += scanned_nucs_dict[key] 
+    if summary.isempty():
+        errmsg = "No result retrieved. Unable to proceed. Are you using the correct VGs and searching on the right chromosomes?\n"
+        exception_handler(ValueError, errmsg, debug)
     # compute the q-values
     if not no_qvalue:
         if verbose: start_q = time.time()

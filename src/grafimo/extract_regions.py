@@ -131,7 +131,10 @@ def scan_graph(
                     chrname = "".join([chroms_prefix, chrom])
                 else:
                     try:
-                        chrname = namemap[chrom]
+                        if chrom.startswith("chr"): 
+                            chrname = namemap[chrom.split("chr")[1]]
+                        else:
+                            chrname = namemap[chrom]
                     except:
                         errmsg = "Missing out name map for chromosome {}.\n"
                         exception_handler(KeyError, errmsg.format(chrom), debug)
@@ -140,7 +143,10 @@ def scan_graph(
                 for pos in positions:
                     start: int = pos[0]
                     stop: int = pos[1]
-                    if chroms_prefix: c = chrname.split(chroms_prefix)[1]
+                    if bool(namemap):
+                        if chrom.startswith("chr"): c = namemap[chrom.split("chr")[1]]
+                        else: c = chrom
+                    elif chroms_prefix: c = chrname.split(chroms_prefix)[1]
                     else: c = chrname
                     region_index:str = "-".join(
                         [":".join([c, str(start)]), str(stop)]
@@ -174,8 +180,16 @@ def scan_graph(
                     except:
                         errmsg = "Missing out name map for chromosome {}.\n"
                         exception_handler(KeyError, errmsg.format(chrom), debug)
-                if chrom.startswith("chr"): positions = regions[chrom]
-                else: positions = regions["".join(["chr", chrom])]
+                if chrom.startswith("chr"): 
+                    if chrom not in regions.keys():
+                        errmsg = "{} does not appear among the chromosomes available in {}.\n"
+                        exception_handler(KeyError, errmsg.format(chrom, bedfile), debug)
+                    positions = regions[chrom]
+                else:
+                    if ("".join(["chr", chrom])) not in regions.keys():
+                        errmsg = "{} does not appear among the chromosomes available in {}.\n"
+                        exception_handler(KeyError, errmsg.format(chrom, bedfile), debug) 
+                    positions = regions["".join(["chr", chrom])]
                 for pos in positions:
                     start: int = pos[0]
                     stop: int = pos[1]

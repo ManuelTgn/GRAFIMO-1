@@ -398,7 +398,13 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                 else:
                     if not os.path.isfile(args.linear_genome):
                         parser.error(
-                            "Unable to find {}".format(args.linear_genome))
+                            "Unable to find {}".format(args.linear_genome)
+                        )
+                        die(1)
+                    if os.stat(args.linear_genome).st_size == 0:  # empty file
+                        parser.error(
+                            "{} seems to be empty.".format(args.linear_genome)
+                        )
                         die(1)
                     args.linear_genome = os.path.abspath(args.linear_genome)
                 # VCF --> the VCF file must have been compressed with
@@ -413,6 +419,11 @@ def main(cmdLineargs: Optional[List[str]] = None) -> None :
                 else:
                     if not os.path.isfile(args.vcf):
                         parser.error('Unable to find {}'.format(args.vcf))
+                        die(1)
+                    if os.stat(args.vcf).st_size == 0:  # empty file
+                        parser.error(
+                            "{} seems to be empty.".format(args.vcf)
+                        )
                         die(1)
                     args.vcf = os.path.abspath(args.vcf)
 

@@ -306,6 +306,17 @@ class ResultTmp(object):
 
         return df_thresh
 
+    
+    def isempty(self):
+        # q-values can be empty --> ignore them
+        # if just one of the mandatory fields is empty we cannot proceed 
+        if (not self._seqnames or not self._seqs or not self._chroms or 
+            not self._starts or not self._stops or not self._strands or 
+            not self._scores or not self._pvalues or not self._frequencies or
+            not self._references):
+            return True
+        return False
+
 
     def _get_seqnames(self):
         if not self._seqnames:
